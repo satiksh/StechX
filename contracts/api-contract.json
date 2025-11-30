@@ -1,0 +1,323 @@
+{
+  "apiContractVersion": "1.0",
+  "brand": {
+    "name": "StechX",
+    "tagline": "Startup for Startups",
+    "theme": "Futuristic Dark, Apple-like, Ultra Responsive"
+  },
+  "auth": {
+    "strategies": [
+      {
+        "name": "JWT",
+        "description": "All protected Talent endpoints require valid JWT; Client endpoints only require JWT for authenticated actions such as viewing sensitive project data.",
+        "header": "Authorization",
+        "error": {
+          "code": 401,
+          "message": "Unauthorized: Missing or invalid JWT."
+        }
+      }
+    ],
+    "publicEndpoints": [
+      "/services",
+      "/portfolio",
+      "/testimonials",
+      "/contact"
+    ],
+    "protectedEndpoints": [
+      "/talent/profile",
+      "/client/projects",
+      "/admin/*"
+    ]
+  },
+  "models": {
+    "User": {
+      "id": "string (uuid)",
+      "role": "enum [Client|Talent|Admin]",
+      "name": "string",
+      "email": "string",
+      "passwordHash": "string",
+      "createdAt": "string (ISO 8601 date)",
+      "updatedAt": "string (ISO 8601 date)",
+      "country": "string",
+      "portfolioUrl": "string (optional)",
+      "skills": "string[] (Talent only)"
+    },
+    "Project": {
+      "id": "string (uuid)",
+      "clientId": "string (User.id)",
+      "title": "string",
+      "description": "string",
+      "type": "enum [Web|App|Video|AI]",
+      "budget": "number",
+      "status": "enum [Pending|InReview|InProgress|Completed|Closed]",
+      "createdAt": "string (ISO 8601 date)",
+      "updatedAt": "string (ISO 8601 date)",
+      "attachments": "string[] (URLs)",
+      "talentId": "string (User.id, optional)"
+    },
+    "Service": {
+      "id": "string (uuid)",
+      "type": "enum [Web|App|Video|AI]",
+      "title": "string",
+      "description": "string",
+      "details": "string",
+      "pricing": "string",
+      "techStack": "string[]"
+    },
+    "Testimonial": {
+      "id": "string (uuid)",
+      "clientName": "string",
+      "quote": "string",
+      "projectId": "string (optional)",
+      "createdAt": "string (ISO 8601 date)"
+    },
+    "Application": {
+      "id": "string (uuid)",
+      "talentId": "string (User.id)",
+      "position": "enum [WebDev|AppDev|VideoEditor|AISpecialist]",
+      "portfolioUrl": "string",
+      "experience": "string",
+      "status": "enum [Submitted|UnderReview|Accepted|Rejected]",
+      "createdAt": "string (ISO 8601 date)"
+    },
+    "ContactRequest": {
+      "id": "string (uuid)",
+      "name": "string",
+      "email": "string",
+      "projectType": "enum [Web|App|Video|AI]",
+      "budget": "number",
+      "message": "string",
+      "createdAt": "string (ISO 8601 date)"
+    },
+    "Error": {
+      "code": "number",
+      "message": "string",
+      "fields": "object (optional)"
+    }
+  },
+  "endpoints": [
+    {
+      "path": "/auth/register",
+      "method": "POST",
+      "request": {
+        "name": "string",
+        "email": "string",
+        "password": "string",
+        "role": "enum [Client|Talent]"
+      },
+      "response": {
+        "user": "User",
+        "jwt": "string"
+      },
+      "errors": [
+        {
+          "code": 400,
+          "message": "Invalid registration details"
+        },
+        {
+          "code": 409,
+          "message": "User already exists"
+        }
+      ]
+    },
+    {
+      "path": "/auth/login",
+      "method": "POST",
+      "request": {
+        "email": "string",
+        "password": "string"
+      },
+      "response": {
+        "user": "User",
+        "jwt": "string"
+      },
+      "errors": [
+        {
+          "code": 401,
+          "message": "Invalid email or password"
+        }
+      ]
+    },
+    {
+      "path": "/services",
+      "method": "GET",
+      "request": {},
+      "response": {
+        "services": "Service[]"
+      },
+      "errors": []
+    },
+    {
+      "path": "/portfolio",
+      "method": "GET",
+      "request": {},
+      "response": {
+        "projects": "Project[]"
+      },
+      "errors": []
+    },
+    {
+      "path": "/testimonials",
+      "method": "GET",
+      "request": {},
+      "response": {
+        "testimonials": "Testimonial[]"
+      },
+      "errors": []
+    },
+    {
+      "path": "/contact",
+      "method": "POST",
+      "request": {
+        "name": "string",
+        "email": "string",
+        "projectType": "enum [Web|App|Video|AI]",
+        "budget": "number",
+        "message": "string"
+      },
+      "response": {
+        "contactRequestId": "string"
+      },
+      "errors": [
+        {
+          "code": 400,
+          "message": "Invalid contact form data"
+        }
+      ]
+    },
+    {
+      "path": "/hire-talent",
+      "method": "POST",
+      "request": {
+        "clientId": "string",
+        "project": "Project"
+      },
+      "response": {
+        "projectId": "string"
+      },
+      "errors": [
+        {
+          "code": 400,
+          "message": "Invalid project data"
+        },
+        {
+          "code": 401,
+          "message": "Unauthorized"
+        }
+      ],
+      "auth": "required"
+    },
+    {
+      "path": "/talent/apply",
+      "method": "POST",
+      "request": {
+        "talentId": "string",
+        "position": "enum [WebDev|AppDev|VideoEditor|AISpecialist]",
+        "portfolioUrl": "string",
+        "experience": "string"
+      },
+      "response": {
+        "applicationId": "string"
+      },
+      "errors": [
+        {
+          "code": 400,
+          "message": "Invalid application data"
+        },
+        {
+          "code": 401,
+          "message": "Unauthorized"
+        }
+      ],
+      "auth": "required"
+    },
+    {
+      "path": "/talent/profile",
+      "method": "GET",
+      "request": {
+        "talentId": "string"
+      },
+      "response": {
+        "user": "User",
+        "applications": "Application[]",
+        "projects": "Project[]"
+      },
+      "errors": [
+        {
+          "code": 404,
+          "message": "Talent not found"
+        },
+        {
+          "code": 401,
+          "message": "Unauthorized"
+        }
+      ],
+      "auth": "required"
+    },
+    {
+      "path": "/client/projects",
+      "method": "GET",
+      "request": {
+        "clientId": "string"
+      },
+      "response": {
+        "projects": "Project[]"
+      },
+      "errors": [
+        {
+          "code": 404,
+          "message": "Client not found"
+        },
+        {
+          "code": 401,
+          "message": "Unauthorized"
+        }
+      ],
+      "auth": "required"
+    },
+    {
+      "path": "/admin/dashboard",
+      "method": "GET",
+      "request": {},
+      "response": {
+        "users": "User[]",
+        "projects": "Project[]",
+        "applications": "Application[]"
+      },
+      "errors": [
+        {
+          "code": 401,
+          "message": "Unauthorized"
+        }
+      ],
+      "auth": "Admin"
+    }
+  ],
+  "errorModels": [
+    {
+      "code": 400,
+      "message": "Bad Request",
+      "fields": "object (Explanation of invalid fields, optional)"
+    },
+    {
+      "code": 401,
+      "message": "Unauthorized"
+    },
+    {
+      "code": 403,
+      "message": "Forbidden"
+    },
+    {
+      "code": 404,
+      "message": "Not Found"
+    },
+    {
+      "code": 409,
+      "message": "Conflict"
+    },
+    {
+      "code": 500,
+      "message": "Internal Server Error"
+    }
+  ]
+}
