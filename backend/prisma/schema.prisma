@@ -111,14 +111,14 @@ model Testimonial {
 
 model Application {
   id           String            @id @default(uuid())
-  talentId     String
+  talentId     String?
   position     Position
   portfolioUrl String
   experience   String
   status       ApplicationStatus @default(Submitted)
   createdAt    DateTime          @default(now())
   
-  talent       User              @relation(fields: [talentId], references: [id])
+  talent       User?             @relation(fields: [talentId], references: [id])
   
   @@index([talentId])
   @@index([status])

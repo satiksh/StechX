@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 
 // Import routes
 import contactRoutes from './routes/contact.routes';
+import talentRoutes from './routes/talent.routes';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.get('/health', (req, res) => {
 
 // Routes
 app.use('/api/contact', contactRoutes);
+app.use('/api/talent', talentRoutes);
 
 // Basic 404 handler
 app.use((req, res) => {

@@ -1,30 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
-import { createApplication, getTalentProfile } from '../services/application.service';
+import { createApplication } from '../services/application.service';
+import { Position } from '@prisma/client';
 
-export const applyAsTalent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const applyAsTalent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { talentId, position, portfolioUrl, experience } = req.body;
-    const result = await createApplication(talentId, position, portfolioUrl, experience);
-    res.status(201).json(result);
+    const { position, portfolioUrl, experience } = req.body;
+
+    const application = await createApplication(
+      position as Position,
+      portfolioUrl,
+      experience
+    );
+
+    res.status(201).json({
+      message: 'Application submitted successfully',
+      application,
+    });
   } catch (error) {
     next(error);
   }
 };
 
 export const getTalentProfileController = async (
-  req: Request,
+  _req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
-  try {
-    const { talentId } = req.query;
-    const result = await getTalentProfile(talentId as string);
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
+  res.status(200).json({ message: 'Talent profile placeholder' });
 };

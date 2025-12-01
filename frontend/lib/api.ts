@@ -32,3 +32,29 @@ export async function submitContactForm(data: {
     return { error: 'Failed to connect to server' };
   }
 }
+
+export async function submitTalentApplication(data: {
+  position: string;
+  portfolioUrl: string;
+  experience: string;
+}): Promise<ApiResponse<any>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/talent/apply`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return { error: error.message || 'Something went wrong' };
+    }
+
+    const result = await response.json();
+    return { data: result };
+  } catch (error) {
+    return { error: 'Failed to connect to server' };
+  }
+}
