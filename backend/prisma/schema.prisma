@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  Client
+  Talent
+  Admin
+}
+
+enum ProjectType {
+  Web
+  App
+  Video
+  AI
+}
+
+enum ProjectStatus {
+  Pending
+  InReview
+  InProgress
+  Completed
+  Closed
+}
+
+enum Position {
+  WebDev
+  AppDev
+  VideoEditor
+  AISpecialist
+}
+
+enum ApplicationStatus {
+  Submitted
+  UnderReview
+  Accepted
+  Rejected
+}
+
+model User {
+  id            String        @id @default(uuid())
+  role          UserRole
+  name          String
+  email         String        @unique
+  passwordHash  String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  country       String
+  portfolioUrl  String?
+  skills        String[]
+  
+  clientProjects    Project[]      @relation("ClientProjects")
+  talentProjects    Project[]      @relation("TalentProjects")
+  applications      Application[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  clientId    String
+  title       String
+  description String
+  type        ProjectType
+  budget      Float
+  status      ProjectStatus @default(Pending)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  attachments String[]
+  talentId    String?
+  
+  client      User          @relation("ClientProjects", fields: [clientId], references: [id])
+  talent      User?         @relation("TalentProjects", fields: [talentId], references: [id])
+  testimonials Testimonial[]
+  
+  @@index([clientId])
+  @@index([talentId])
+  @@index([status])
+  @@index([type])
+}
+
+model Service {
+  id          String      @id @default(uuid())
+  type        ProjectType
+  title       String
+  description String
+  details     String
+  pricing     String
+  techStack   String[]
+  
+  @@index([type])
+}
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  clientName  String
+  quote       String
+  projectId   String?
+  createdAt   DateTime @default(now())
+  
+  project     Project? @relation(fields: [projectId], references: [id])
+  
+  @@index([projectId])
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  talentId     String
+  position     Position
+  portfolioUrl String
+  experience   String
+  status       ApplicationStatus @default(Submitted)
+  createdAt    DateTime          @default(now())
+  
+  talent       User              @relation(fields: [talentId], references: [id])
+  
+  @@index([talentId])
+  @@index([status])
+}
+
+model ContactRequest {
+  id          String   @id @default(uuid())
+  name        String
+  email       String
+  projectType ProjectType
+  budget      Float
+  message     String
+  createdAt   DateTime @default(now())
+  
+  @@index([email])
+  @@index([createdAt])
+}
