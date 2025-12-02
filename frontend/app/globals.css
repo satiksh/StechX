@@ -1,26 +1,375 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+html {
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "SF Pro Display", system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (max-width: 900px) {
+  html {
+    font-size: 15px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (max-width: 600px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* StechX global body */
+.stechx-body {
+  margin: 0;
+  background-color: #050509;
+  color: #f5f5f5;
+}
+
+/* Nav */
+.stechx-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #15151c;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 5, 9, 0.96),
+    rgba(5, 5, 9, 0.92)
+  );
+  backdrop-filter: blur(20px);
+}
+
+.stechx-nav-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.stechx-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.stechx-logo-box {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #2a2a33;
+  background-color: #0c0c13;
+}
+
+.stechx-logo-img {
+  object-fit: cover;
+}
+
+.stechx-brand-text {
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Nav links */
+.stechx-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 0.88rem;
+}
+
+.stechx-nav-links a {
+  text-decoration: none;
+  color: #d7d7e0;
+}
+
+.stechx-nav-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #262630;
+  margin-inline: 2px;
+}
+
+.stechx-nav-primary {
+  color: #050509 !important;
+  background: linear-gradient(135deg, #4f8cff, #7bc9ff);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  box-shadow: 0 0 0 1px rgba(105, 155, 255, 0.35);
+}
+
+.stechx-nav-secondary {
+  color: #e2e2ec !important;
+  border-radius: 999px;
+  border: 1px solid #2b2b35;
+  padding: 7px 14px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+/* Burger for mobile */
+.stechx-nav-toggle {
+  display: none;
+}
+
+.stechx-burger {
+  display: none;
+  width: 24px;
+  height: 20px;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.stechx-burger span {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background-color: #e2e2ec;
+}
+
+/* Main container */
+.stechx-main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+/* Hero */
+.stechx-hero {
+  min-height: calc(100vh - 80px);
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 40px;
+  align-items: center;
+}
+
+.stechx-hero-left {
+  max-width: 540px;
+}
+
+.stechx-hero-pill {
+  border: 1px solid #2d2d34;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  margin-bottom: 16px;
+}
+
+.stechx-hero-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #7bc9ff, #4f8cff);
+}
+
+/* restored more “Apple-like” type */
+.stechx-hero-title {
+  font-size: 3.1rem;
+  line-height: 1.02;
+  margin: 0 0 22px;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.stechx-hero-highlight {
+  background: linear-gradient(135deg, #7bc9ff, #b3e6ff);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.stechx-hero-sub {
+  font-size: 0.96rem;
+  line-height: 1.7;
+  color: #c1c1cf;
+  max-width: 32rem;
+  margin: 0 0 28px;
+}
+
+.stechx-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stechx-hero-cta-primary {
+  text-decoration: none;
+  color: #050509;
+  background: linear-gradient(135deg, #4f8cff, #7bc9ff);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.stechx-hero-cta-secondary {
+  text-decoration: none;
+  color: #f5f5f5;
+  border: 1px solid #2d2d34;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.stechx-hero-note {
+  font-size: 0.8rem;
+  color: #777789;
+  margin: 0;
+}
+
+/* Hero right card */
+.stechx-hero-card {
+  border-radius: 24px;
+  border: 1px solid #23232b;
+  background: radial-gradient(circle at 0% 0%, #14141b, #050509);
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+  align-content: space-between;
+}
+
+.stechx-hero-card-label {
+  font-size: 0.8rem;
+  color: #8a8aa0;
+  margin-bottom: 4px;
+}
+
+.stechx-hero-card-text {
+  font-size: 0.95rem;
+}
+
+.stechx-hero-link {
+  color: #7bc9ff;
+}
+
+.stechx-hero-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.stechx-hero-card-item {
+  border-radius: 16px;
+  border: 1px solid #262632;
+  padding: 10px;
+}
+
+.stechx-hero-card-item-label {
+  color: #8a8aa0;
+  margin-bottom: 2px;
+}
+
+/* Contact form styling */
+.stechx-contact-form {
+  display: grid;
+  gap: 10px;
+}
+
+.stechx-contact-field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.stechx-contact-field label {
+  color: #8a8aa0;
+}
+
+.stechx-contact-field input,
+.stechx-contact-field select,
+.stechx-contact-field textarea {
+  background-color: #090912;
+  border-radius: 999px;
+  border: 1px solid #262632;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #f5f5f5;
+  outline: none;
+}
+
+.stechx-contact-field textarea {
+  border-radius: 14px;
+  resize: vertical;
+}
+
+.stechx-contact-field input:focus,
+.stechx-contact-field select:focus,
+.stechx-contact-field textarea:focus {
+  border-color: #4f8cff;
+  box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.4);
+}
+
+/* RESPONSIVE BREAKPOINTS */
+
+@media (max-width: 900px) {
+  .stechx-nav-inner {
+    padding-inline: 14px;
+  }
+
+  .stechx-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 16px;
+  }
+
+  .stechx-hero-title {
+    font-size: 2.4rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .stechx-nav-inner {
+    gap: 12px;
+  }
+
+  .stechx-burger {
+    display: flex;
+  }
+
+  .stechx-nav-links {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    padding: 10px 16px 14px;
+    background: rgba(5, 5, 9, 0.98);
+    border-bottom: 1px solid #15151c;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  #stechx-nav-toggle:checked ~ .stechx-nav-links {
+    display: flex;
+  }
+
+  .stechx-main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 32px 16px 64px;
+  }
+
+  .stechx-hero {
+    min-height: auto;
+  }
+
+  /* keep focus card BELOW hero content on mobile */
+  .stechx-hero-card {
+    order: 1;
+  }
 }

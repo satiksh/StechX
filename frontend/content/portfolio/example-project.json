@@ -1,0 +1,40 @@
+{
+  "slug": "example-project",
+  "title": "Example Project",
+  "client": "Example Client",
+  "industry": "Technology",
+  "year": "2025",
+  "summary": "A short overview of the project, the client’s challenge, and the outcome.",
+  "services": [
+    "UI/UX Design",
+    "Full-Stack Development",
+    "Performance Optimization"
+  ],
+  "results": [
+    { "label": "Conversion rate", "value": "+45%" },
+    { "label": "Page load time", "value": "−38%" },
+    { "label": "Organic traffic", "value": "+62%" }
+  ],
+  "sections": [
+    {
+      "id": "challenge",
+      "title": "The Challenge",
+      "body": "Describe the initial situation, user problems, and business goals in clear, concise terms."
+    },
+    {
+      "id": "approach",
+      "title": "Approach & Strategy",
+      "body": "Outline discovery, research, architecture, and implementation decisions that led to the solution."
+    },
+    {
+      "id": "solution",
+      "title": "The Solution",
+      "body": "Explain the final experience, key features, and what makes this solution stand out."
+    },
+    {
+      "id": "outcomes",
+      "title": "Outcomes",
+      "body": "Summarize measurable impact, qualitative feedback, and how the project supports long‑term goals."
+    }
+  ]
+}
