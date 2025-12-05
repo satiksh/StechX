@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function ApplyTalentPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "sent">("idle");
@@ -15,26 +15,27 @@ export default function ApplyTalentPage() {
 
     const formData = new FormData(e.currentTarget);
 
+    // Must match talentApplicationSchema exactly
     const payload: any = {
       name: formData.get("name"),
       email: formData.get("email"),
-      message: formData.get("experience"), // main text -> message
+      message: formData.get("brief"),
     };
 
-    const experienceText = formData.get("experience");
-    if (experienceText) {
-      payload.experience = experienceText;
+    const experience = formData.get("experience");
+    if (experience && String(experience).trim().length > 0) {
+      payload.experience = experience;
     }
 
     try {
-      const res = await fetch(`${API_URL}/apply/talent`, {
+      const res = await fetch(`${API_URL}/api/apply/talent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        console.error("Talent apply failed");
+        console.error("Talent apply failed", await res.text());
         setStatus("idle");
         return;
       }
@@ -52,22 +53,22 @@ export default function ApplyTalentPage() {
         <div className="stechx-hero-left">
           <div className="stechx-hero-pill">
             <span className="stechx-hero-pill-dot" />
-            <span>Apply as talent · Join the pool</span>
+            <span>Apply as talent · Join StechX network</span>
           </div>
 
           <h1 className="stechx-hero-title">
-            Work with{" "}
-            <span className="stechx-hero-highlight">startup founders</span>.
+            Join the{" "}
+            <span className="stechx-hero-highlight">StechX builder network</span>.
           </h1>
 
           <p className="stechx-hero-sub">
-            Join the StechX talent pool for Web, App, Video, and AI projects.
-            You focus on great work—we handle clients and project management.
+            Tell us who you are, what you build, and the kind of projects you
+            want. We’ll match you with the right StechX clients.
           </p>
 
           <p className="stechx-hero-note">
-            Remote‑first, project‑based work. Great for builders who like clean,
-            Apple‑like products.
+            Ideal for developers, designers, and video/AI creators who like
+            fast, focused projects.
           </p>
         </div>
 
@@ -84,47 +85,23 @@ export default function ApplyTalentPage() {
             </div>
 
             <div className="stechx-contact-field">
-              <label htmlFor="role">Role</label>
-              <select id="role" name="role" defaultValue="">
-                <option value="" disabled>
-                  Choose your main role
-                </option>
-                <option>Web developer</option>
-                <option>App / React Native developer</option>
-                <option>Video editor / motion</option>
-                <option>AI / automation engineer</option>
-                <option>Multidisciplinary</option>
-              </select>
-            </div>
-
-            <div className="stechx-contact-field">
-              <label htmlFor="portfolio">Portfolio links</label>
-              <input
-                id="portfolio"
-                name="portfolio"
-                placeholder="Website, GitHub, Behance, Dribbble, etc."
-                required
-              />
-            </div>
-
-            <div className="stechx-contact-field">
-              <label htmlFor="experience">Experience / skills</label>
+              <label htmlFor="experience">Experience / Stack</label>
               <textarea
                 id="experience"
                 name="experience"
                 rows={3}
-                placeholder="Share your core skills, tools you use, and any notable projects."
-                required
+                placeholder="Share your core skills, years of experience, and recent projects."
               />
             </div>
 
             <div className="stechx-contact-field">
-              <label htmlFor="note">Short note</label>
+              <label htmlFor="brief">Why StechX / Ideal projects</label>
               <textarea
-                id="note"
-                name="note"
-                rows={3}
-                placeholder="Tell us how you like to work and what kind of projects excite you."
+                id="brief"
+                name="brief"
+                rows={4}
+                placeholder="Tell us what kind of work you enjoy, and what kind of clients you like working with."
+                required
               />
             </div>
 
@@ -153,17 +130,17 @@ export default function ApplyTalentPage() {
                   color: "#7bc9ff",
                 }}
               >
-                Thanks for applying as talent. StechX will reach out if there’s
-                a good match for upcoming projects.
+                Thanks for applying as talent. StechX will get in touch if
+                there’s a good fit.
               </p>
             )}
           </form>
 
           <div style={{ fontSize: "0.8rem", color: "#8a8aa0" }}>
-            <div style={{ marginBottom: "4px" }}>How StechX works with talent</div>
+            <div style={{ marginBottom: "4px" }}>What happens next?</div>
             <div>
-              We match you with projects that fit your skills and bandwidth.
-              Clear scopes, async‑friendly communication, and on‑time payouts.
+              We’ll review your skills and reach out for a short intro call
+              if there’s a match with upcoming projects.
             </div>
           </div>
         </aside>

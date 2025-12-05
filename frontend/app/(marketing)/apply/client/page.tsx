@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 function mapBudgetToNumber(label: FormDataEntryValue | null): number | undefined {
   if (!label) return undefined;
@@ -27,10 +27,10 @@ export default function ApplyClientPage() {
     const formData = new FormData(e.currentTarget);
 
     const payload: any = {
+      // serviceId is optional in schema, so we skip for now
       name: formData.get("name"),
       email: formData.get("email"),
-      message: formData.get("brief"), // map brief -> message
-      // serviceId is optional and we skip it for now
+      message: formData.get("brief"),
     };
 
     const budgetNumber = mapBudgetToNumber(formData.get("budget"));
@@ -39,14 +39,14 @@ export default function ApplyClientPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/apply/client`, {
+      const res = await fetch(`${API_URL}/api/apply/client`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        console.error("Client apply failed");
+        console.error("Client apply failed", await res.text());
         setStatus("idle");
         return;
       }
