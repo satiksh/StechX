@@ -13,6 +13,9 @@ import adminRoutes from './routes/adminRoutes';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// DEBUG: log which DB the server is really using
+console.log('### RUNTIME DATABASE_URL:', process.env.DATABASE_URL);
+
 // CORS + basic middleware
 app.use(
   cors({
@@ -50,12 +53,19 @@ app.use((_req, res) => {
 
 // Global error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-  });
-});
+app.use(
+  (
+    err: any,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error(err);
+    res.status(err.status || 500).json({
+      error: err.message || 'Internal server error',
+    });
+  }
+);
 
 app.listen(PORT, () => {
   console.log(`StechX v2 backend running on http://localhost:${PORT}`);
