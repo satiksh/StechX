@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api" ;
 
 function mapBudgetToNumber(label: FormDataEntryValue | null): number | undefined {
   if (!label) return undefined;
@@ -39,7 +39,7 @@ export default function ApplyClientPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/apply/client`, {
+      const res = await fetch(`${API_URL}/apply/client`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
