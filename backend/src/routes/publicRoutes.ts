@@ -1,4 +1,3 @@
-// src/routes/publicRoutes.ts
 import { Router } from 'express';
 import {
   getServices,
@@ -20,6 +19,7 @@ import {
   clientApplicationSchema,
   talentApplicationSchema,
 } from '../validators/applicationValidators';
+import { prisma } from '../utils/prismaClient';
 
 const router = Router();
 
@@ -40,6 +40,20 @@ router.get('/projects/:slug', getProjectBySlug);
 // Testimonials
 // GET /api/testimonials
 router.get('/testimonials', getTestimonials);
+
+// Applications
+// GET /api/applications
+router.get('/applications', async (_req, res) => {
+  try {
+    const applications = await prisma.application.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(applications);
+  } catch (error) {
+    console.error('Failed to fetch applications', error);
+    res.status(500).json({ error: 'Failed to fetch applications' });
+  }
+});
 
 // Contact & Applications
 // POST /api/contact
