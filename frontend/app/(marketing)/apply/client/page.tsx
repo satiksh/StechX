@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api" ;
+// Use a single base URL env for both dev and production.
+// In dev:  NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+// In prod: NEXT_PUBLIC_API_BASE_URL=https://stechx.onrender.com
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 function mapBudgetToNumber(label: FormDataEntryValue | null): number | undefined {
   if (!label) return undefined;
@@ -27,7 +30,6 @@ export default function ApplyClientPage() {
     const formData = new FormData(e.currentTarget);
 
     const payload: any = {
-      // serviceId is optional in schema, so we skip for now
       name: formData.get("name"),
       email: formData.get("email"),
       message: formData.get("brief"),
@@ -39,7 +41,7 @@ export default function ApplyClientPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/apply/client`, {
+      const res = await fetch(`${API_BASE_URL}/api/apply/client`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -68,8 +70,7 @@ export default function ApplyClientPage() {
           </div>
 
           <h1 className="stechx-hero-title">
-            Start a{" "}
-            <span className="stechx-hero-highlight">StechX project</span>.
+            Start a <span className="stechx-hero-highlight">StechX project</span>.
           </h1>
 
           <p className="stechx-hero-sub">
@@ -164,9 +165,7 @@ export default function ApplyClientPage() {
               }}
               disabled={status === "submitting"}
             >
-              {status === "submitting"
-                ? "Submitting…"
-                : "Submit client application"}
+              {status === "submitting" ? "Submitting…" : "Submit client application"}
             </button>
 
             {status === "sent" && (
@@ -177,8 +176,8 @@ export default function ApplyClientPage() {
                   color: "#7bc9ff",
                 }}
               >
-                Thanks for applying as a client. StechX will reply with next
-                steps soon.
+                Thanks for applying as a client. StechX will reply with next steps
+                soon.
               </p>
             )}
           </form>
@@ -186,8 +185,8 @@ export default function ApplyClientPage() {
           <div style={{ fontSize: "0.8rem", color: "#8a8aa0" }}>
             <div style={{ marginBottom: "4px" }}>What happens next?</div>
             <div>
-              You’ll get an email with a simple breakdown of scope, timelines,
-              and an optional call slot.
+              You’ll get an email with a simple breakdown of scope, timelines, and
+              an optional call slot.
             </div>
           </div>
         </aside>

@@ -1,34 +1,46 @@
 // src/index.ts
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import morgan from 'morgan';
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
-import { prisma } from './utils/prismaClient';
-import authRoutes from './routes/authRoutes';
-import publicRoutes from './routes/publicRoutes';
-import adminRoutes from './routes/adminRoutes';
+import { prisma } from "./utils/prismaClient";
+import authRoutes from "./routes/authRoutes";
+import publicRoutes from "./routes/publicRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // DEBUG: log which DB the server is really using
-console.log('### RUNTIME DATABASE_URL:', process.env.DATABASE_URL);
+console.log("### RUNTIME DATABASE_URL:", process.env.DATABASE_URL);
+
+// Allowed frontend origins (local + deployed). You can also add more if needed.
+const defaultAllowedOrigins = [
+  "http://localhost:3000",
+  "https://stech-x.vercel.app",
+];
+
+// If FRONTEND_ORIGIN is set, use it in addition:
+const envOrigin = process.env.FRONTEND_ORIGIN;
+const allowedOrigins = envOrigin
+  ? [...defaultAllowedOrigins, envOrigin]
+  : defaultAllowedOrigins;
 
 // CORS + basic middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || '*',
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
 // Health check
-app.get('/health', async (_req, res) => {
+app.get("/health", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.status(200).json({ ok: true });
@@ -38,17 +50,17 @@ app.get('/health', async (_req, res) => {
 });
 
 // Auth (Google → JWT)
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Public API (read + submit)
-app.use('/api', publicRoutes);
+app.use("/api", publicRoutes);
 
 // Admin API (protected)
-app.use('/api/admin', adminRoutes);
+app.use("/api/admin", adminRoutes);
 
 // 404
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Not found' });
+  res.status(404).json({ error: "Not found" });
 });
 
 // Global error handler
@@ -62,7 +74,7 @@ app.use(
   ) => {
     console.error(err);
     res.status(err.status || 500).json({
-      error: err.message || 'Internal server error',
+      error: err.message || "Internal server error",
     });
   }
 );

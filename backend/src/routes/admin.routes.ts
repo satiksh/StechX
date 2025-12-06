@@ -5,6 +5,11 @@ import { UserRole } from '../types';
 
 const router = Router();
 
-router.get('/dashboard', authenticate, authorizeRoles(UserRole.Admin), getAdminDashboard);
+router.get(
+  '/dashboard',
+  authenticate,
+  authorizeRoles(UserRole.ADMIN),
+  getAdminDashboard
+);
 
 export default router;
