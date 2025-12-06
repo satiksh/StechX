@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export default function ApplyTalentPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "sent">("idle");
@@ -28,7 +28,7 @@ export default function ApplyTalentPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/apply/talent`, {
+      const res = await fetch(`${API_BASE_URL}/api/apply/talent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -63,7 +63,7 @@ export default function ApplyTalentPage() {
 
           <p className="stechx-hero-sub">
             Tell us who you are, what you build, and the kind of projects you
-            want. We’ll match you with the right StechX clients.
+            want. We'll match you with the right StechX clients.
           </p>
 
           <p className="stechx-hero-note">
@@ -131,7 +131,7 @@ export default function ApplyTalentPage() {
                 }}
               >
                 Thanks for applying as talent. StechX will get in touch if
-                there’s a good fit.
+                there's a good fit.
               </p>
             )}
           </form>
@@ -139,8 +139,8 @@ export default function ApplyTalentPage() {
           <div style={{ fontSize: "0.8rem", color: "#8a8aa0" }}>
             <div style={{ marginBottom: "4px" }}>What happens next?</div>
             <div>
-              We’ll review your skills and reach out for a short intro call
-              if there’s a match with upcoming projects.
+              We'll review your skills and reach out for a short intro call
+              if there's a match with upcoming projects.
             </div>
           </div>
         </aside>
