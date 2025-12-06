@@ -2,48 +2,51 @@
 
 import { useState } from "react";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://stechx.onrender.com";
 
 export default function ContactPage() {
-  const [status, setStatus] = useState<"idle" | "submitting" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">(
+    "idle"
+  );
+  const [error, setError] = useState("");
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (status === "submitting") return;
     setStatus("submitting");
+    setError("");
 
     const formData = new FormData(e.currentTarget);
-
     const payload = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      company: formData.get("company"),
-      need: formData.get("need"),
-      message: formData.get("message"),
+      name: String(formData.get("name") || "").trim(),
+      email: String(formData.get("email") || "").trim(),
+      company: String(formData.get("company") || "").trim() || undefined,
+      need: String(formData.get("need") || "").trim() || undefined,
+      message: String(formData.get("message") || "").trim(),
     };
 
     try {
-      const res = await fetch(`${API_URL}/contact`, {
+      const res = await fetch(`${API_BASE_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        console.error("Contact submit failed");
-        setStatus("idle");
+        setStatus("error");
+        setError("Could not send. Please try again.");
         return;
       }
 
       setStatus("sent");
+      e.currentTarget.reset();
     } catch (err) {
       console.error("Network error", err);
-      setStatus("idle");
+      setStatus("error");
+      setError("Network error. Please try again.");
     }
   }
-
 
   return (
     <div className="stechx-main">
@@ -135,6 +138,17 @@ export default function ContactPage() {
                 }}
               >
                 Thanks for reaching out. We’ll get back to you soon.
+              </p>
+            )}
+            {status === "error" && (
+              <p
+                style={{
+                  marginTop: "10px",
+                  fontSize: "0.8rem",
+                  color: "#ff6b6b",
+                }}
+              >
+                {error || "Could not send. Please try again."}
               </p>
             )}
           </form>
