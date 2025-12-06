@@ -58,6 +58,7 @@ export default function RootLayout({
               <Link href="/services">Services</Link>
               <Link href="/portfolio">Portfolio</Link>
               <Link href="/contact">Contact</Link>
+              <Link href="/about">About</Link>
               <div className="stechx-nav-divider" />
               <Link href="/apply/client" className="stechx-nav-primary">
                 Get a Service
