@@ -359,3 +359,53 @@ export const bookmarkApi = {
     return apiCall('/bookmarks/freelancers');
   },
 };
+
+// ===== JOBS (alias for projectApi for backend compatibility) =====
+export const jobApi = {
+  async browseJobs(filters?: { category?: string; minBudget?: number; maxBudget?: number; skip?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (filters?.category) query.append('category', filters.category);
+    if (filters?.minBudget) query.append('minBudget', filters.minBudget.toString());
+    if (filters?.maxBudget) query.append('maxBudget', filters.maxBudget.toString());
+    if (filters?.skip) query.append('skip', filters.skip.toString());
+    if (filters?.limit) query.append('limit', filters.limit.toString());
+    return apiCall(`/jobs/browse?${query.toString()}`);
+  },
+
+  async getMyJobs(filters?: { status?: string; limit?: number; skip?: number }) {
+    const query = new URLSearchParams();
+    if (filters?.status) query.append('status', filters.status);
+    if (filters?.limit) query.append('limit', filters.limit.toString());
+    if (filters?.skip) query.append('skip', filters.skip.toString());
+    return apiCall(`/jobs/my-jobs?${query.toString()}`);
+  },
+
+  async getJobById(jobId: string) {
+    return apiCall(`/jobs/${jobId}`);
+  },
+
+  async createJob(data: {
+    title: string;
+    description: string;
+    budget: number;
+    budgetType: 'fixed' | 'hourly';
+    category: string;
+    requiredSkills: string[];
+    deadline?: string;
+    isUrgent?: boolean;
+  }) {
+    return apiCall('/jobs', { method: 'POST', body: data });
+  },
+
+  async updateJob(jobId: string, data: any) {
+    return apiCall(`/jobs/${jobId}`, { method: 'PUT', body: data });
+  },
+
+  async deleteJob(jobId: string) {
+    return apiCall(`/jobs/${jobId}`, { method: 'DELETE' });
+  },
+
+  async getJobProposals(jobId: string) {
+    return apiCall(`/jobs/${jobId}/proposals`);
+  },
+};

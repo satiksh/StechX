@@ -7,8 +7,15 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'CLIENT' | 'FREELANCER';
+  role: 'ADMIN' | 'CLIENT' | 'TALENT';
   avatarUrl?: string;
+  bio?: string;
+  skills?: string[];
+  hourlyRate?: number;
+  totalEarnings?: number;
+  rating?: number;
+  totalReviews?: number;
+  portfolioUrl?: string;
 }
 
 interface AuthContextType {
@@ -180,7 +187,7 @@ function getRedirectPath(role: string): string {
       return '/admin/dashboard';
     case 'CLIENT':
       return '/dashboard/client';
-    case 'FREELANCER':
+    case 'TALENT':
       return '/dashboard/freelancer';
     default:
       return '/';

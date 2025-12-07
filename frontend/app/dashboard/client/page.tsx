@@ -63,7 +63,7 @@ export default function ClientDashboard() {
       try {
         setIsLoading(true);
         // Fetch user stats
-        const statsResponse = await jobApi.getMyProjects();
+        const statsResponse = await jobApi.getMyJobs();
         if (statsResponse && statsResponse.data) {
           const myProjects = statsResponse.data;
           setProjects(myProjects);
