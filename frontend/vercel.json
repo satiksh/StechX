@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "framework": "nextjs",
+  "env": [
+    {
+      "key": "NEXT_PUBLIC_API_BASE_URL",
+      "value": "https://stechx-api.onrender.com"
+    },
+    {
+      "key": "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+      "value": "446798573358-0gg1itniepvvb89stmfgpmivskmjkb00.apps.googleusercontent.com"
+    }
+  ]
+}
