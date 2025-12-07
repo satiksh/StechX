@@ -1,102 +1,17 @@
 // src/index.ts
-import "dotenv/config";
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import morgan from "morgan";
+import 'dotenv/config';
+import { app, PORT } from './server';
+import { prisma } from './utils/prismaClient';
 
-import { prisma } from "./utils/prismaClient";
-import authRoutes from "./routes/authRoutes";
-import publicRoutes from "./routes/publicRoutes";
-import adminRoutes from "./routes/adminRoutes";
-
-const app = express();
-const PORT = process.env.PORT || 4000;
-
-// DEBUG: log which DB the server is really using
-console.log("### RUNTIME DATABASE_URL:", process.env.DATABASE_URL);
-
-// Allowed frontend origins (local + deployed). You can also add more if needed.
-const defaultAllowedOrigins = [
-  "http://localhost:3000",
-  "https://stech-x.vercel.app",
-  "https://stechx.vercel.app",
-];
-
-// If FRONTEND_ORIGIN is set, use it in addition:
-const envOrigin = process.env.FRONTEND_ORIGIN;
-const allowedOrigins = envOrigin
-  ? [...defaultAllowedOrigins, envOrigin]
-  : defaultAllowedOrigins;
-
-// CORS + basic middleware
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
-app.use(express.json());
-app.use(cookieParser());
-app.use(morgan("dev"));
-
-// Health check
-app.get("/health", async (_req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.status(200).json({ ok: true });
-  } catch {
-    res.status(500).json({ ok: false });
-  }
-});
-
-// Test endpoint to verify routes are loaded
-app.get("/api/test", (_req, res) => {
-  res.json({ 
-    message: "Backend is working!", 
-    timestamp: new Date().toISOString(),
-    routes: [
-      "GET /health",
-      "GET /api/test",
-      "POST /api/auth/register",
-      "POST /api/auth/login",
-      "POST /api/auth/google",
-      "POST /api/auth/logout",
-      "GET /api/auth/me"
-    ]
-  });
-});
-
-// Auth (Google → JWT)
-app.use("/api/auth", authRoutes);
-
-// Public API (read + submit)
-app.use("/api", publicRoutes);
-
-// Admin API (protected)
-app.use("/api/admin", adminRoutes);
-
-// 404
-app.use((_req, res) => {
-  res.status(404).json({ error: "Not found" });
-});
-
-// Global error handler
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use(
-  (
-    err: any,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction
-  ) => {
-    console.error(err);
-    res.status(err.status || 500).json({
-      error: err.message || "Internal server error",
-    });
-  }
-);
-
+// Start server
 app.listen(PORT, () => {
-  console.log(`StechX v2 backend running on http://localhost:${PORT}`);
+  console.log(`✅ StechX Backend running on http://localhost:${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing server...');
+  await prisma.$disconnect();
+  process.exit(0);
 });

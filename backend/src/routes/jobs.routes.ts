@@ -14,19 +14,19 @@ import {
 
 const router = Router();
 
-// Public routes
+// Public routes - specific routes FIRST
 router.get('/browse', getAllJobs);
+router.get('/my-jobs', authenticate, getMyJobs);
 router.get('/bookmarks', authenticate, getBookmarkedJobs);
+
+// Parameterized routes - AFTER specific ones
 router.get('/:jobId', getJobById);
 
-// Protected routes (freelancer can browse, client can post)
+// Create and modify routes
 router.post('/', authenticate, createJob);
-router.post('/bookmark', authenticate, bookmarkJob);
-router.delete('/:jobId/bookmark', authenticate, unbookmarkJob);
-
-// Client routes
-router.get('/my-jobs', authenticate, getMyJobs);
 router.put('/:jobId', authenticate, updateJob);
 router.delete('/:jobId', authenticate, deleteJob);
+router.post('/:jobId/bookmark', authenticate, bookmarkJob);
+router.delete('/:jobId/bookmark', authenticate, unbookmarkJob);
 
 export default router;
