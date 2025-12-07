@@ -1,4 +1,5 @@
-"use client";
+"use client"
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -35,88 +36,141 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function checkAuth() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'GET',
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+      } else if (res.status === 401) {
+        // User not authenticated - this is expected
+        setUser(null);
+        console.log('User not authenticated');
+      } else {
+        // Other errors
+        console.error('Auth check error:', res.status, res.statusText);
+        setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed', error);
+      console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   }
 
   async function register(name: string, email: string, password: string, role: string) {
-    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, email, password, role }),
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password, role }),
+      });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Registration failed');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Registration failed');
+      }
+
+      const data = await res.json();
+      setUser(data.user);
+
+      if (data.user.role === 'ADMIN') {
+        router.push('/dashboard');
+      } else if (data.user.role === 'CLIENT') {
+        router.push('/dashboard/client');
+      } else {
+        router.push('/dashboard/freelancer');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-
-    const data = await res.json();
-    setUser(data.user);
-    
-    if (data.user.role === 'ADMIN') router.push('/dashboard');
-    else if (data.user.role === 'CLIENT') router.push('/dashboard/client');
-    else router.push('/dashboard/freelancer');
   }
 
   async function login(email: string, password: string) {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Login failed');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Login failed');
+      }
+
+      const data = await res.json();
+      setUser(data.user);
+
+      if (data.user.role === 'ADMIN') {
+        router.push('/dashboard');
+      } else if (data.user.role === 'CLIENT') {
+        router.push('/dashboard/client');
+      } else {
+        router.push('/dashboard/freelancer');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    const data = await res.json();
-    setUser(data.user);
-    
-    if (data.user.role === 'ADMIN') router.push('/dashboard');
-    else if (data.user.role === 'CLIENT') router.push('/dashboard/client');
-    else router.push('/dashboard/freelancer');
   }
 
   async function googleLogin(credential: string) {
-    const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ credential }),
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ credential }),
+      });
 
-    if (!res.ok) {
-      throw new Error('Google login failed');
+      if (!res.ok) {
+        throw new Error('Google login failed');
+      }
+
+      const data = await res.json();
+      setUser(data.user);
+
+      if (data.user.role === 'ADMIN') {
+        router.push('/dashboard');
+      } else if (data.user.role === 'CLIENT') {
+        router.push('/dashboard/client');
+      } else {
+        router.push('/dashboard/freelancer');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
     }
-
-    const data = await res.json();
-    setUser(data.user);
-    
-    if (data.user.role === 'ADMIN') router.push('/dashboard');
-    else if (data.user.role === 'CLIENT') router.push('/dashboard/client');
-    else router.push('/dashboard/freelancer');
   }
 
   async function logout() {
-    await fetch(`${API_BASE_URL}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    setUser(null);
-    router.push('/auth/login');
+    try {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      setUser(null);
+      router.push('/auth/login');
+    }
   }
 
   return (
