@@ -1,7 +1,6 @@
 services:
   - type: web
     name: stechx-api
-    root: backend
     env: docker
     region: oregon
     
