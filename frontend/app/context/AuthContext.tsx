@@ -82,13 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      if (data.user.role === 'ADMIN') {
-        router.push('/dashboard');
-      } else if (data.user.role === 'CLIENT') {
-        router.push('/dashboard/client');
-      } else {
-        router.push('/dashboard/freelancer');
-      }
+      // Redirect to dashboard which will handle role-based routing
+      router.push('/dashboard');
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -114,13 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      if (data.user.role === 'ADMIN') {
-        router.push('/dashboard');
-      } else if (data.user.role === 'CLIENT') {
-        router.push('/dashboard/client');
-      } else {
-        router.push('/dashboard/freelancer');
-      }
+      // Redirect to dashboard which will handle role-based routing
+      router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -145,13 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      if (data.user.role === 'ADMIN') {
-        router.push('/dashboard');
-      } else if (data.user.role === 'CLIENT') {
-        router.push('/dashboard/client');
-      } else {
-        router.push('/dashboard/freelancer');
-      }
+      // Redirect to dashboard which will handle role-based routing
+      router.push('/dashboard');
     } catch (error) {
       console.error('Google login error:', error);
       throw error;
