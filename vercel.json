@@ -1,5 +1,16 @@
 {
   "buildCommand": "cd frontend && npm run build",
   "devCommand": "cd frontend && npm run dev",
-  "installCommand": "cd frontend && npm ci"
+  "installCommand": "cd frontend && npm ci",
+  "framework": "nextjs",
+  "env": [
+    {
+      "key": "NEXT_PUBLIC_API_BASE_URL",
+      "value": "https://stechx-api.onrender.com"
+    },
+    {
+      "key": "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+      "value": "446798573358-0gg1itniepvvb89stmfgpmivskmjkb89stmfgpmivskmjkb00.apps.googleusercontent.com"
+    }
+  ]
 }
