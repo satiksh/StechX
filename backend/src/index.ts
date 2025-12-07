@@ -50,6 +50,23 @@ app.get("/health", async (_req, res) => {
   }
 });
 
+// Test endpoint to verify routes are loaded
+app.get("/api/test", (_req, res) => {
+  res.json({ 
+    message: "Backend is working!", 
+    timestamp: new Date().toISOString(),
+    routes: [
+      "GET /health",
+      "GET /api/test",
+      "POST /api/auth/register",
+      "POST /api/auth/login",
+      "POST /api/auth/google",
+      "POST /api/auth/logout",
+      "GET /api/auth/me"
+    ]
+  });
+});
+
 // Auth (Google → JWT)
 app.use("/api/auth", authRoutes);
 
