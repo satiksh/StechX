@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: stechx-api
+    root: backend
+    env: docker
+    region: oregon
+    
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://stech-x.vercel.app
+      - key: FRONTEND_ORIGIN
+        value: https://stech-x.vercel.app
+
+    plan: free
+    healthCheckPath: /health
+    numInstances: 1
