@@ -7,6 +7,12 @@ import dotenv from 'dotenv';
 // Import routes
 import contactRoutes from './routes/contact.routes';
 import talentRoutes from './routes/talent.routes';
+import authRoutes from './routes/auth.routes';
+import jobRoutes from './routes/jobs.routes';
+import proposalRoutes from './routes/proposals.routes';
+import contractRoutes from './routes/contracts.routes';
+import messageRoutes from './routes/messages.routes';
+import reviewRoutes from './routes/reviews.routes';
 
 dotenv.config();
 
@@ -15,7 +21,12 @@ const PORT = process.env.PORT || 4000;
 
 // CORS - allow frontend to connect
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://frontend-n64vxyw9e-satiksh-patels-projects.vercel.app',
+    'https://stechx.vercel.app',
+  ],
   credentials: true,
 }));
 
@@ -33,6 +44,12 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/api/contact', contactRoutes);
 app.use('/api/talent', talentRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/proposals', proposalRoutes);
+app.use('/api/contracts', contractRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Basic 404 handler
 app.use((req, res) => {

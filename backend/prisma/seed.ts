@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -197,10 +197,18 @@ async function main() {
     data: { status: 'IN_PROGRESS', assignedFreelancerId: freelancers[0].id, progress: 30 },
   });
 
+  // Create conversation
+  const conversation = await prisma.conversation.create({
+    data: {
+      participantIds: [clients[0].id, freelancers[0].id],
+      jobId: jobs[0].id,
+    },
+  });
+
   // Create sample messages
   await prisma.message.create({
     data: {
-      conversationId: contract.id, // Using contract ID as conversation ID for simplicity
+      conversationId: conversation.id,
       senderId: clients[0].id,
       recipientId: freelancers[0].id,
       content: 'Hi Sarah! Great proposal. Can we schedule a call to discuss the timeline?',
@@ -211,7 +219,7 @@ async function main() {
   console.log('✅ Created sample messages');
 
   // Create sample reviews
-  const review = await prisma.review.create({
+  await prisma.review.create({
     data: {
       contractId: contract.id,
       reviewerId: clients[0].id,
