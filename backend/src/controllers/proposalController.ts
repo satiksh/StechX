@@ -2,19 +2,21 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/prismaClient';
 
 // Submit a proposal
-export async function submitProposal(req: Request, res: Response) {
+export async function submitProposal(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { jobId, coverLetter, proposedBudget, estimatedDays, attachments } = req.body;
 
     if (!jobId || !coverLetter) {
-      return res.status(400).json({ error: 'Job ID and cover letter required' });
+      res.status(400).json({ error: 'Job ID and cover letter required' });
+      return;
     }
 
     // Check if job exists
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      res.status(404).json({ error: 'Job not found' });
+      return;
     }
 
     // Check if already proposed
@@ -22,7 +24,8 @@ export async function submitProposal(req: Request, res: Response) {
       where: { jobId_freelancerId: { jobId, freelancerId: userId } },
     });
     if (existing) {
-      return res.status(400).json({ error: 'Already submitted a proposal for this job' });
+      res.status(400).json({ error: 'Already submitted a proposal for this job' });
+      return;
     }
 
     const proposal = await prisma.proposal.create({
@@ -141,14 +144,15 @@ export async function getMyProposals(req: Request, res: Response) {
 }
 
 // Update proposal status
-export async function updateProposalStatus(req: Request, res: Response) {
+export async function updateProposalStatus(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { proposalId } = req.params;
     const { status } = req.body;
 
     if (!status) {
-      return res.status(400).json({ error: 'Status required' });
+      res.status(400).json({ error: 'Status required' });
+      return;
     }
 
     // Verify ownership through job
@@ -158,11 +162,13 @@ export async function updateProposalStatus(req: Request, res: Response) {
     });
 
     if (!proposal) {
-      return res.status(404).json({ error: 'Proposal not found' });
+      res.status(404).json({ error: 'Proposal not found' });
+      return;
     }
 
     if (proposal.job.clientId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to update this proposal' });
+      res.status(403).json({ error: 'Not authorized to update this proposal' });
+      return;
     }
 
     const updated = await prisma.proposal.update({
@@ -205,7 +211,7 @@ export async function updateProposalStatus(req: Request, res: Response) {
 }
 
 // Withdraw proposal
-export async function withdrawProposal(req: Request, res: Response) {
+export async function withdrawProposal(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { proposalId } = req.params;
@@ -213,11 +219,13 @@ export async function withdrawProposal(req: Request, res: Response) {
     const proposal = await prisma.proposal.findUnique({ where: { id: proposalId } });
 
     if (!proposal || proposal.freelancerId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to withdraw this proposal' });
+      res.status(403).json({ error: 'Not authorized to withdraw this proposal' });
+      return;
     }
 
     if (proposal.status !== 'DRAFT' && proposal.status !== 'SUBMITTED') {
-      return res.status(400).json({ error: 'Cannot withdraw proposal in current status' });
+      res.status(400).json({ error: 'Cannot withdraw proposal in current status' });
+      return;
     }
 
     const updated = await prisma.proposal.update({

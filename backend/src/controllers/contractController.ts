@@ -2,13 +2,14 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/prismaClient';
 
 // Create contract from proposal
-export async function createContract(req: Request, res: Response) {
+export async function createContract(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { proposalId, amount, startDate, endDate, terms } = req.body;
 
     if (!proposalId || !amount) {
-      return res.status(400).json({ error: 'Proposal ID and amount required' });
+      res.status(400).json({ error: 'Proposal ID and amount required' });
+      return;
     }
 
     // Get proposal with job details
@@ -18,12 +19,14 @@ export async function createContract(req: Request, res: Response) {
     });
 
     if (!proposal) {
-      return res.status(404).json({ error: 'Proposal not found' });
+      res.status(404).json({ error: 'Proposal not found' });
+      return;
     }
 
     // Verify client ownership
     if (proposal.job.clientId !== userId) {
-      return res.status(403).json({ error: 'Not authorized' });
+      res.status(403).json({ error: 'Not authorized' });
+      return;
     }
 
     // Create contract
@@ -109,7 +112,7 @@ export async function getMyContracts(req: Request, res: Response) {
 }
 
 // Get contract by ID
-export async function getContractById(req: Request, res: Response) {
+export async function getContractById(req: Request, res: Response): Promise<void> {
   try {
     const { contractId } = req.params;
 
@@ -125,7 +128,8 @@ export async function getContractById(req: Request, res: Response) {
     });
 
     if (!contract) {
-      return res.status(404).json({ error: 'Contract not found' });
+      res.status(404).json({ error: 'Contract not found' });
+      return;
     }
 
     res.json({ data: contract });
@@ -136,24 +140,27 @@ export async function getContractById(req: Request, res: Response) {
 }
 
 // Update contract status
-export async function updateContractStatus(req: Request, res: Response) {
+export async function updateContractStatus(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { contractId } = req.params;
     const { status } = req.body;
 
     if (!status) {
-      return res.status(400).json({ error: 'Status required' });
+      res.status(400).json({ error: 'Status required' });
+      return;
     }
 
     const contract = await prisma.contract.findUnique({ where: { id: contractId } });
 
     if (!contract) {
-      return res.status(404).json({ error: 'Contract not found' });
+      res.status(404).json({ error: 'Contract not found' });
+      return;
     }
 
     if (contract.clientId !== userId && contract.freelancerId !== userId) {
-      return res.status(403).json({ error: 'Not authorized' });
+      res.status(403).json({ error: 'Not authorized' });
+      return;
     }
 
     const updated = await prisma.contract.update({
@@ -185,14 +192,15 @@ export async function updateContractStatus(req: Request, res: Response) {
 }
 
 // Update project progress
-export async function updateProgress(req: Request, res: Response) {
+export async function updateProgress(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { contractId } = req.params;
     const { progress } = req.body;
 
     if (progress === undefined || progress < 0 || progress > 100) {
-      return res.status(400).json({ error: 'Progress must be between 0 and 100' });
+      res.status(400).json({ error: 'Progress must be between 0 and 100' });
+      return;
     }
 
     const contract = await prisma.contract.findUnique({
@@ -201,15 +209,17 @@ export async function updateProgress(req: Request, res: Response) {
     });
 
     if (!contract) {
-      return res.status(404).json({ error: 'Contract not found' });
+      res.status(404).json({ error: 'Contract not found' });
+      return;
     }
 
     if (contract.freelancerId !== userId) {
-      return res.status(403).json({ error: 'Only freelancer can update progress' });
+      res.status(403).json({ error: 'Only freelancer can update progress' });
+      return;
     }
 
     // Update job progress
-    const updated = await prisma.job.update({
+    await prisma.job.update({
       where: { id: contract.jobId },
       data: { progress },
     });

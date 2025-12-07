@@ -2,13 +2,14 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/prismaClient';
 
 // Send message
-export async function sendMessage(req: Request, res: Response) {
+export async function sendMessage(req: Request, res: Response): Promise<void> {
   try {
     const senderId = (req as any).userId;
     const { conversationId, recipientId, content, jobId } = req.body;
 
     if (!content || !recipientId) {
-      return res.status(400).json({ error: 'Recipient and content required' });
+      res.status(400).json({ error: 'Recipient and content required' });
+      return;
     }
 
     // Create or get conversation

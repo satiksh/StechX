@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/prismaClient';
-import { authenticateToken } from '../middleware/auth';
 
 // Create a new job
-export async function createJob(req: Request, res: Response) {
+export async function createJob(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { title, description, category, requiredSkills, budget, budgetType, deadline, isUrgent } = req.body;
 
     if (!title || !description || !category || !budget) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
     }
 
     const job = await prisma.job.create({
@@ -119,7 +119,7 @@ export async function getMyJobs(req: Request, res: Response) {
 }
 
 // Get single job
-export async function getJobById(req: Request, res: Response) {
+export async function getJobById(req: Request, res: Response): Promise<void> {
   try {
     const { jobId } = req.params;
 
@@ -147,7 +147,8 @@ export async function getJobById(req: Request, res: Response) {
     });
 
     if (!job) {
-      return res.status(404).json({ error: 'Job not found' });
+      res.status(404).json({ error: 'Job not found' });
+      return;
     }
 
     res.json({ data: job });
@@ -158,7 +159,7 @@ export async function getJobById(req: Request, res: Response) {
 }
 
 // Update job
-export async function updateJob(req: Request, res: Response) {
+export async function updateJob(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { jobId } = req.params;
@@ -167,7 +168,8 @@ export async function updateJob(req: Request, res: Response) {
     // Check ownership
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job || job.clientId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to update this job' });
+      res.status(403).json({ error: 'Not authorized to update this job' });
+      return;
     }
 
     const updated = await prisma.job.update({
@@ -196,7 +198,7 @@ export async function updateJob(req: Request, res: Response) {
 }
 
 // Delete job
-export async function deleteJob(req: Request, res: Response) {
+export async function deleteJob(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { jobId } = req.params;
@@ -204,7 +206,8 @@ export async function deleteJob(req: Request, res: Response) {
     // Check ownership
     const job = await prisma.job.findUnique({ where: { id: jobId } });
     if (!job || job.clientId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this job' });
+      res.status(403).json({ error: 'Not authorized to delete this job' });
+      return;
     }
 
     await prisma.job.delete({ where: { id: jobId } });
@@ -217,13 +220,14 @@ export async function deleteJob(req: Request, res: Response) {
 }
 
 // Bookmark a job
-export async function bookmarkJob(req: Request, res: Response) {
+export async function bookmarkJob(req: Request, res: Response): Promise<void> {
   try {
     const userId = (req as any).userId;
     const { jobId } = req.body;
 
     if (!jobId) {
-      return res.status(400).json({ error: 'Job ID required' });
+      res.status(400).json({ error: 'Job ID required' });
+      return;
     }
 
     const bookmark = await prisma.bookmarkedJob.create({
@@ -233,7 +237,8 @@ export async function bookmarkJob(req: Request, res: Response) {
     res.status(201).json({ data: bookmark, message: 'Job bookmarked' });
   } catch (error: any) {
     if (error.code === 'P2002') {
-      return res.status(400).json({ error: 'Already bookmarked' });
+      res.status(400).json({ error: 'Already bookmarked' });
+      return;
     }
     console.error('Error bookmarking job:', error);
     res.status(500).json({ error: error.message || 'Failed to bookmark job' });

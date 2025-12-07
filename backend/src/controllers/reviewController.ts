@@ -2,20 +2,22 @@ import { Request, Response } from 'express';
 import { prisma } from '../utils/prismaClient';
 
 // Leave a review
-export async function leaveReview(req: Request, res: Response) {
+export async function leaveReview(req: Request, res: Response): Promise<void> {
   try {
     const reviewerId = (req as any).userId;
     const { contractId, revieweeId, rating, comment } = req.body;
 
     if (!revieweeId || !rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Valid rating (1-5) and reviewee ID required' });
+      res.status(400).json({ error: 'Valid rating (1-5) and reviewee ID required' });
+      return;
     }
 
     // Check if contract exists if provided
     if (contractId) {
       const contract = await prisma.contract.findUnique({ where: { id: contractId } });
       if (!contract) {
-        return res.status(404).json({ error: 'Contract not found' });
+        res.status(404).json({ error: 'Contract not found' });
+        return;
       }
     }
 
@@ -55,7 +57,8 @@ export async function leaveReview(req: Request, res: Response) {
     res.status(201).json({ data: review, message: 'Review posted' });
   } catch (error: any) {
     if (error.code === 'P2002') {
-      return res.status(400).json({ error: 'Already reviewed this contract' });
+      res.status(400).json({ error: 'Already reviewed this contract' });
+      return;
     }
     console.error('Error leaving review:', error);
     res.status(500).json({ error: error.message || 'Failed to post review' });
