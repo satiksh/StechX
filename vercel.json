@@ -1,7 +1,12 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
-  "github": {
-    "silent": true
+  "root": "frontend",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "env": ["NODE_ENV=production"],
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
   }
 }
