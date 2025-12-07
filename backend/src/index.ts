@@ -20,6 +20,7 @@ console.log("### RUNTIME DATABASE_URL:", process.env.DATABASE_URL);
 const defaultAllowedOrigins = [
   "http://localhost:3000",
   "https://stech-x.vercel.app",
+  "https://stechx.vercel.app",
 ];
 
 // If FRONTEND_ORIGIN is set, use it in addition:

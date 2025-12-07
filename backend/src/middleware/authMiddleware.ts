@@ -1,59 +1,42 @@
-// src/middleware/authMiddleware.ts
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 
-export interface AuthUserPayload {
-  userId: string;
-  email: string;
-  role: UserRole;
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_dev_key';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUserPayload;
-    }
-  }
-}
-
-const JWT_SECRET = process.env.JWT_SECRET as string;
-
-if (!JWT_SECRET) {
-  console.warn('JWT_SECRET is not set. Auth middleware will not work correctly.');
-}
-
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const authHeader = req.headers.authorization;
-    const tokenFromHeader = authHeader?.startsWith('Bearer ')
-      ? authHeader.split(' ')[1]
-      : undefined;
-
-    const tokenFromCookie = (req as any).cookies?.token as string | undefined;
-
-    const token = tokenFromHeader || tokenFromCookie;
-
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    
     if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'No token provided' });
     }
-
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthUserPayload;
-    req.user = decoded;
-
-    return next();
+    
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    (req as any).userId = decoded.userId;
+    (req as any).userRole = decoded.role;
+    
+    next();
   } catch (error) {
-    console.error('JWT verification failed:', error);
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-export const authorizeRole = (role: UserRole) => {
+export const authorizeRole = (...allowedRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || req.user.role !== role) {
-      return res.status(403).json({ error: 'Forbidden: insufficient permissions' });
+    const userRole = (req as any).userRole;
+    
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      return res.status(403).json({ error: 'Access denied' });
     }
-
-    return next();
+    
+    next();
   };
 };
+
+// Alias for backward compatibility
+export const authenticate = authMiddleware;

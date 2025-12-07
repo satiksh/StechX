@@ -1,92 +1,113 @@
-import { PrismaClient } from '@prisma/client';
-import { hashPassword, comparePassword } from '../utils/password';
-import { generateToken } from '../utils/jwt';
-import { AppError } from '../middleware/errorHandler';
-import { AuthResponse, UserRole } from '../types';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../utils/prismaClient';
+import { UserRole } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_dev_key';
 
-export const registerUser = async (
+export async function registerUser(
   name: string,
   email: string,
   password: string,
   role: UserRole
-): Promise<AuthResponse> => {
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-
-  if (existingUser) {
-    throw new AppError(409, 'User already exists');
+) {
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw new Error('Email already registered');
   }
 
-  const passwordHash = await hashPassword(password);
+  const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
     data: {
       name,
       email,
-      passwordHash,
       role,
-      country: 'India',
-      skills: [],
+      provider: 'LOCAL',
+      passwordHash,
     },
   });
 
-  const jwt = generateToken({
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-  });
+  const token = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 
   return {
+    token,
     user: {
       id: user.id,
-      role: user.role,
       name: user.name,
       email: user.email,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
-      country: user.country,
-      portfolioUrl: user.portfolioUrl || undefined,
-      skills: user.skills,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
     },
-    jwt,
   };
-};
+}
 
-export const loginUser = async (
-  email: string,
-  password: string
-): Promise<AuthResponse> => {
+export async function loginUser(email: string, password: string) {
   const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !user.passwordHash) {
+    throw new Error('Invalid credentials');
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    throw new Error('Invalid credentials');
+  }
+
+  const token = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
+    },
+  };
+}
+
+export async function googleAuth(profile: any) {
+  const email = profile.emails?.[0]?.value;
+  if (!email) throw new Error('No email from Google');
+
+  let user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    throw new AppError(401, 'Invalid email or password');
+    user = await prisma.user.create({
+      data: {
+        name: profile.displayName,
+        email,
+        role: 'CLIENT',
+        provider: 'GOOGLE',
+        providerId: profile.id,
+        avatarUrl: profile.photos?.[0]?.value,
+      },
+    });
   }
 
-  const isPasswordValid = await comparePassword(password, user.passwordHash);
-
-  if (!isPasswordValid) {
-    throw new AppError(401, 'Invalid email or password');
-  }
-
-  const jwt = generateToken({
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-  });
+  const token = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 
   return {
+    token,
     user: {
       id: user.id,
-      role: user.role,
       name: user.name,
       email: user.email,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
-      country: user.country,
-      portfolioUrl: user.portfolioUrl || undefined,
-      skills: user.skills,
+      role: user.role,
+      avatarUrl: user.avatarUrl,
     },
-    jwt,
   };
-};
+}
