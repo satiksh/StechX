@@ -82,8 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      // Redirect to dashboard which will handle role-based routing
-      router.push('/dashboard');
+      // Redirect based on role
+      const redirectPath = getRedirectPath(data.user.role);
+      router.push(redirectPath);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -109,8 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      // Redirect to dashboard which will handle role-based routing
-      router.push('/dashboard');
+      // Redirect based on role
+      const redirectPath = getRedirectPath(data.user.role);
+      router.push(redirectPath);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -135,8 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       setUser(data.user);
 
-      // Redirect to dashboard which will handle role-based routing
-      router.push('/dashboard');
+      // Redirect based on role
+      const redirectPath = getRedirectPath(data.user.role);
+      router.push(redirectPath);
     } catch (error) {
       console.error('Google login error:', error);
       throw error;
@@ -169,4 +172,17 @@ export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
+}
+
+function getRedirectPath(role: string): string {
+  switch (role) {
+    case 'ADMIN':
+      return '/admin/dashboard';
+    case 'CLIENT':
+      return '/dashboard/client';
+    case 'FREELANCER':
+      return '/dashboard/freelancer';
+    default:
+      return '/';
+  }
 }
