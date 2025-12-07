@@ -13,6 +13,7 @@ import proposalRoutes from './routes/proposals.routes';
 import contractRoutes from './routes/contracts.routes';
 import messageRoutes from './routes/messages.routes';
 import reviewRoutes from './routes/reviews.routes';
+import userRoutes from './routes/users.routes';
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ app.get('/health', (req, res) => {
 app.use('/api/contact', contactRoutes);
 app.use('/api/talent', talentRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/contracts', contractRoutes);
