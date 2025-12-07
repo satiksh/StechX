@@ -41,19 +41,20 @@ function StatBox({ icon, label, value, trend }: StatBoxProps) {
 }
 
 export default function ClientDashboard() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
+    setIsLoading(false);
+    if (!user) {
       router.push('/auth/login');
-    }
-    if (user?.role !== 'CLIENT') {
+    } else if (user.role !== 'CLIENT') {
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8aa0' }}>
         Loading...
@@ -77,7 +78,7 @@ export default function ClientDashboard() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <StatBox icon="📊" label="Active Projects" value={3} trend={{ direction: 'up', percentage: 12 }} />
+        <StatBox icon="��" label="Active Projects" value={3} trend={{ direction: 'up', percentage: 12 }} />
         <StatBox icon="💰" label="Total Spent" value="$9,700" trend={{ direction: 'down', percentage: 8 }} />
         <StatBox icon="📝" label="Applications" value={5} trend={{ direction: 'up', percentage: 23 }} />
         <StatBox icon="👥" label="Active Freelancers" value={3} />

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -15,25 +15,11 @@ interface StatBoxProps {
 
 function StatBox({ icon, label, value, trend }: StatBoxProps) {
   return (
-    <div
-      style={{
-        background: 'rgba(122, 201, 255, 0.1)',
-        border: '1px solid #7bc9ff',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-      }}
-    >
+    <div style={{ background: 'rgba(122, 201, 255, 0.1)', border: '1px solid #7bc9ff', borderRadius: '12px', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
         <div style={{ fontSize: '0.875rem', color: '#8a8aa0', marginBottom: '0.5rem' }}>{label}</div>
         <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fff' }}>{value}</div>
-        {trend && (
-          <div style={{ fontSize: '0.75rem', color: trend.direction === 'up' ? '#4ade80' : '#ff6b6b', marginTop: '0.5rem' }}>
-            {trend.direction === 'up' ? '↑' : '↓'} {trend.percentage}% from last month
-          </div>
-        )}
+        {trend && <div style={{ fontSize: '0.75rem', color: trend.direction === 'up' ? '#4ade80' : '#ff6b6b', marginTop: '0.5rem' }}>{trend.direction === 'up' ? '↑' : '↓'} {trend.percentage}% from last month</div>}
       </div>
       <div style={{ fontSize: '2.5rem' }}>{icon}</div>
     </div>
@@ -41,24 +27,21 @@ function StatBox({ icon, label, value, trend }: StatBoxProps) {
 }
 
 export default function FreelancerDashboard() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
+    setIsLoading(false);
+    if (!user) {
       router.push('/auth/login');
-    }
-    if (user?.role !== 'FREELANCER') {
+    } else if (user.role !== 'FREELANCER') {
       router.push('/dashboard');
     }
-  }, [user, loading, router]);
+  }, [user, router]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8aa0' }}>
-        Loading...
-      </div>
-    );
+  if (isLoading) {
+    return <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8aa0' }}>Loading...</div>;
   }
 
   const activeProjects = [
@@ -75,9 +58,7 @@ export default function FreelancerDashboard() {
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', marginBottom: '0.5rem' }}>
-          Welcome back, {user?.name}! 👋
-        </h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', marginBottom: '0.5rem' }}>Welcome back, {user?.name}! 👋</h1>
         <p style={{ color: '#8a8aa0' }}>Here's your freelance activity</p>
       </div>
 
@@ -91,11 +72,8 @@ export default function FreelancerDashboard() {
       <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', border: '1px solid rgba(122, 201, 255, 0.2)', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(122, 201, 255, 0.1)', paddingBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fff', margin: 0 }}>Active Projects</h3>
-          <button style={{ background: '#7bc9ff', color: '#0f0f1e', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>
-            Browse Jobs
-          </button>
+          <button style={{ background: '#7bc9ff', color: '#0f0f1e', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Browse Jobs</button>
         </div>
-
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
             <thead>
@@ -114,15 +92,9 @@ export default function FreelancerDashboard() {
                   <td style={{ padding: '1rem', color: '#ccc' }}>{p.name}</td>
                   <td style={{ padding: '1rem', color: '#ccc' }}>{p.client}</td>
                   <td style={{ padding: '1rem', color: '#ccc' }}>{p.rate}</td>
-                  <td style={{ padding: '1rem', color: p.hoursTillDeadline < 48 ? '#ff6b6b' : '#4ade80' }}>
-                    {p.hoursTillDeadline}h <span style={{ fontSize: '0.75rem' }}>{p.hoursTillDeadline < 48 ? '⚠️ Urgent' : ''}</span>
-                  </td>
+                  <td style={{ padding: '1rem', color: p.hoursTillDeadline < 48 ? '#ff6b6b' : '#4ade80' }}>{p.hoursTillDeadline}h {p.hoursTillDeadline < 48 && <span style={{ fontSize: '0.75rem' }}>⚠️ Urgent</span>}</td>
                   <td style={{ padding: '1rem', color: '#4ade80', fontWeight: '600' }}>{p.earned}</td>
-                  <td style={{ padding: '1rem' }}>
-                    <button style={{ background: 'transparent', color: '#7bc9ff', border: '1px solid #7bc9ff', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                      View Details
-                    </button>
-                  </td>
+                  <td style={{ padding: '1rem' }}><button style={{ background: 'transparent', color: '#7bc9ff', border: '1px solid #7bc9ff', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>View Details</button></td>
                 </tr>
               ))}
             </tbody>
@@ -132,7 +104,6 @@ export default function FreelancerDashboard() {
 
       <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', border: '1px solid rgba(122, 201, 255, 0.2)', borderRadius: '16px', padding: '2rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid rgba(122, 201, 255, 0.1)', paddingBottom: '1.5rem', margin: 0 }}>Job Opportunities</h3>
-
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
             <thead>
@@ -152,12 +123,8 @@ export default function FreelancerDashboard() {
                   <td style={{ padding: '1rem', color: '#4ade80', fontWeight: '600' }}>{app.budget}</td>
                   <td style={{ padding: '1rem', color: '#ccc' }}>{app.deadline}</td>
                   <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <button style={{ background: '#7bc9ff', color: '#0f0f1e', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600' }}>
-                      Submit
-                    </button>
-                    <button style={{ background: 'transparent', color: '#7bc9ff', border: '1px solid #7bc9ff', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>
-                      Details
-                    </button>
+                    <button style={{ background: '#7bc9ff', color: '#0f0f1e', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600' }}>Submit</button>
+                    <button style={{ background: 'transparent', color: '#7bc9ff', border: '1px solid #7bc9ff', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}>Details</button>
                   </td>
                 </tr>
               ))}
