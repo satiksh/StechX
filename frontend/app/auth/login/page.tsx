@@ -1,4 +1,7 @@
 "use client";
+
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { useGoogleLogin } from "@react-oauth/google";
