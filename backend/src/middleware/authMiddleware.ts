@@ -10,10 +10,21 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   try {
-    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    // Try to get token from cookies first, then from Authorization header
+    let token = req.cookies.token;
+    
+    if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7);
+      }
+    }
     
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ 
+        error: 'No token provided',
+        message: 'Please log in first. Send token via cookie or Authorization header.'
+      });
     }
     
     const decoded = jwt.verify(token, JWT_SECRET) as any;
@@ -22,7 +33,10 @@ export const authMiddleware = (
     
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ 
+      error: 'Invalid or expired token',
+      message: 'Please log in again.'
+    });
   }
 };
 
