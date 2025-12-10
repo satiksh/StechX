@@ -1,9 +1,8 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+import { API_BASE_URL } from "@/lib/config";
 
 async function getServices() {
   try {
-    const res = await fetch(`${API_URL}/services`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE_URL}/services`, { cache: "no-store" });
     if (!res.ok) return [];
     return await res.json();
   } catch {

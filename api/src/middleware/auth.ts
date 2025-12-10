@@ -19,13 +19,20 @@ export const authenticate = async (
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token: string | undefined;
+
+    // Prefer Authorization header but fall back to signed cookie for browser requests
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+    } else if ((req as any).cookies?.token) {
+      token = (req as any).cookies.token;
+    }
+
+    if (!token) {
       throw new AppError(401, 'Unauthorized: Missing or invalid JWT.');
     }
 
-    const token = authHeader.substring(7);
     const payload = verifyToken(token);
-
     req.user = payload;
     next();
   } catch (error) {

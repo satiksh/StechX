@@ -1,6 +1,7 @@
 export default function HomePage() {
   return (
-    <div className="stechx-hero">
+    <div className="stechx-main">
+      <div className="stechx-hero">
       <section className="stechx-hero-left">
         <div className="stechx-hero-pill">
           <span className="stechx-hero-pill-dot" />
@@ -20,10 +21,10 @@ export default function HomePage() {
         </p>
 
         <div className="stechx-hero-ctas">
-          <a href="/apply/client" className="stechx-hero-cta-primary">
+          <a href="/auth/register?role=CLIENT" className="stechx-hero-cta-primary">
             Get a Service
           </a>
-          <a href="/apply/talent" className="stechx-hero-cta-secondary">
+          <a href="/auth/register?role=FREELANCER" className="stechx-hero-cta-secondary">
             Get Hired
           </a>
         </div>
@@ -62,6 +63,7 @@ export default function HomePage() {
           </div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

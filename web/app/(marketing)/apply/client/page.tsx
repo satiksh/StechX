@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-// Use a single base URL env for both dev and production.
-// In dev:  NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
-// In prod: NEXT_PUBLIC_API_BASE_URL=https://stechx.onrender.com
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { API_BASE_URL } from "@/lib/config";
 
 function mapBudgetToNumber(label: FormDataEntryValue | null): number | undefined {
   if (!label) return undefined;
@@ -21,6 +16,10 @@ function mapBudgetToNumber(label: FormDataEntryValue | null): number | undefined
 
 export default function ApplyClientPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "sent">("idle");
+  const [budgetChoice, setBudgetChoice] = useState("");
+  const [customBudget, setCustomBudget] = useState("");
+  const [timelineChoice, setTimelineChoice] = useState("");
+  const [customTimeline, setCustomTimeline] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,19 +28,32 @@ export default function ApplyClientPage() {
 
     const formData = new FormData(e.currentTarget);
 
+    const timelineValue =
+      timelineChoice === "custom" ? customTimeline.trim() : timelineChoice;
+
     const payload: any = {
       name: formData.get("name"),
       email: formData.get("email"),
-      message: formData.get("brief"),
+      message: [
+        formData.get("brief"),
+        formData.get("service") ? `Service: ${formData.get("service")}` : null,
+        formData.get("company") ? `Company: ${formData.get("company")}` : null,
+        timelineValue ? `Timeline: ${timelineValue}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
     };
 
-    const budgetNumber = mapBudgetToNumber(formData.get("budget"));
+    const budgetNumber =
+      budgetChoice === "custom"
+        ? parseFloat(customBudget) || undefined
+        : mapBudgetToNumber(budgetChoice || formData.get("budget"));
     if (budgetNumber !== undefined) {
       payload.budget = budgetNumber;
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/apply/client`, {
+      const res = await fetch(`${API_BASE_URL}/apply/client`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -117,7 +129,13 @@ export default function ApplyClientPage() {
 
             <div className="stechx-contact-field">
               <label htmlFor="budget">Budget range (USD)</label>
-              <select id="budget" name="budget" defaultValue="">
+              <select
+                id="budget"
+                name="budget"
+                value={budgetChoice}
+                onChange={(e) => setBudgetChoice(e.target.value)}
+                required
+              >
                 <option value="" disabled>
                   Choose range
                 </option>
@@ -126,12 +144,32 @@ export default function ApplyClientPage() {
                 <option>$3k – $7k</option>
                 <option>$7k – $15k</option>
                 <option>$15k+</option>
+                <option value="custom">Custom amount</option>
               </select>
+              {budgetChoice === "custom" && (
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  inputMode="decimal"
+                  placeholder="Enter budget in USD"
+                  value={customBudget}
+                  onChange={(e) => setCustomBudget(e.target.value)}
+                  required
+                  style={{ borderRadius: "12px" }}
+                />
+              )}
             </div>
 
             <div className="stechx-contact-field">
               <label htmlFor="timeline">Timeline</label>
-              <select id="timeline" name="timeline" defaultValue="">
+              <select
+                id="timeline"
+                name="timeline"
+                value={timelineChoice}
+                onChange={(e) => setTimelineChoice(e.target.value)}
+                required
+              >
                 <option value="" disabled>
                   Choose timeline
                 </option>
@@ -139,7 +177,18 @@ export default function ApplyClientPage() {
                 <option>Within 1 month</option>
                 <option>1–3 months</option>
                 <option>3+ months / just exploring</option>
+                <option value="custom">Custom timeline</option>
               </select>
+              {timelineChoice === "custom" && (
+                <input
+                  type="text"
+                  placeholder="e.g. 6 weeks, after funding, specific date"
+                  value={customTimeline}
+                  onChange={(e) => setCustomTimeline(e.target.value)}
+                  required
+                  style={{ borderRadius: "12px" }}
+                />
+              )}
             </div>
 
             <div className="stechx-contact-field">

@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/config';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'CLIENT' | 'TALENT';
+  role: 'ADMIN' | 'CLIENT' | 'FREELANCER' | 'AGENCY';
   avatarUrl?: string;
   bio?: string;
   skills?: string[];
@@ -29,8 +30,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -56,14 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (res.status === 401) {
         // User not authenticated - this is expected
         setUser(null);
-        console.log('User not authenticated');
       } else {
         // Other errors
         console.error('Auth check error:', res.status, res.statusText);
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      // API not available - this is OK in development mode
+      console.log('API unavailable, but that\'s OK for demo mode');
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -72,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function register(name: string, email: string, password: string, role: string) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function googleLogin(credential: string) {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+      const res = await fetch(`${API_BASE_URL}/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -184,10 +183,11 @@ export function useAuth() {
 function getRedirectPath(role: string): string {
   switch (role) {
     case 'ADMIN':
-      return '/admin/dashboard';
+      return '/dashboard/admin';
     case 'CLIENT':
       return '/dashboard/client';
-    case 'TALENT':
+    case 'FREELANCER':
+    case 'AGENCY':
       return '/dashboard/freelancer';
     default:
       return '/';

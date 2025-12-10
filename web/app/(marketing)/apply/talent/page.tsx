@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function ApplyTalentPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "sent">("idle");
@@ -28,7 +26,7 @@ export default function ApplyTalentPage() {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/apply/talent`, {
+      const res = await fetch(`${API_BASE_URL}/apply/talent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

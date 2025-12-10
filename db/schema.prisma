@@ -10,7 +10,8 @@ datasource db {
 enum UserRole {
   ADMIN
   CLIENT
-  TALENT
+  FREELANCER
+  AGENCY
 }
 
 enum AuthProvider {
@@ -33,9 +34,13 @@ enum ApplicationStatus {
 enum ProjectStatus {
   DRAFT
   OPEN
+  BIDDING
+  BID_WON
+  PENDING_ACCEPTANCE
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  REJECTED_REOPEN_REQUESTED
 }
 
 enum ProposalStatus {
@@ -48,11 +53,14 @@ enum ProposalStatus {
 }
 
 enum ContractStatus {
-  PENDING
+  PENDING_ADMIN_APPROVAL
+  PENDING_CLIENT_APPROVAL
   ACTIVE
+  AWAITING_EXTENSION
   COMPLETED
   CANCELLED
   DISPUTED
+  REFUNDED
 }
 
 enum PaymentStatus {
@@ -61,6 +69,8 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+  ESCROWED
+  RELEASED
 }
 
 enum MessageStatus {
@@ -104,6 +114,8 @@ model User {
   reviewedBy      Review[]     @relation("reviewee")
   notifications   Notification[]
   bookmarkedJobs  BookmarkedJob[]
+  bids            Bid[] @relation("FreelancerBids")
+  profileRating   Float     @default(0) // Separate rating for bid rejections
 
   @@index([email])
   @@index([role])
@@ -196,7 +208,9 @@ model Job {
   category        String
   requiredSkills  String[]
   budget          Float
-  budgetType      String    @default("fixed") // "fixed" or "hourly"
+  budgetType      String    @default("fixed") // "fixed" or "hourly" or "custom"
+  customBudget    Float?    // If client enters custom budget
+  maxBidPrice     Float?    // Maximum bid price (80% of budget)
   deadline        DateTime?
   status          ProjectStatus @default(OPEN)
   clientId        String    @db.Uuid
@@ -204,12 +218,17 @@ model Job {
   progress        Int       @default(0) // 0-100
   attachments     String[]  @default([])
   isUrgent        Boolean   @default(false)
+  biddingEndsAt   DateTime? // Bidding period ends
+  rejectionCount  Int       @default(0) // Track rejections after winning bid
+  lastRejectedAt  DateTime?
+  weekDeadline    DateTime? // 1 week from client submission
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   // Relations
   client          User       @relation("JobsAsClient", fields: [clientId], references: [id], onDelete: Cascade)
   proposals       Proposal[]
+  bids            Bid[]
   contract        Contract?
   messages        Message[]
   bookmarkedBy    BookmarkedJob[]
@@ -221,6 +240,7 @@ model Job {
   @@index([category])
   @@index([deadline])
   @@index([isUrgent])
+  @@index([biddingEndsAt])
 }
 
 model Proposal {
@@ -247,17 +267,53 @@ model Proposal {
   @@index([submittedAt])
 }
 
+model Bid {
+  id              String    @id @default(uuid()) @db.Uuid
+  jobId           String    @db.Uuid
+  freelancerId    String    @db.Uuid
+  bidAmount       Float
+  proposedDays    Int?
+  coverLetter     String?
+  status          String    @default("pending") // "pending", "won", "lost", "rejected", "accepted"
+  isWinner        Boolean   @default(false)
+  acceptanceDeadline DateTime? // 1 day to accept after winning
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  job            Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  freelancer     User      @relation("FreelancerBids", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, freelancerId])
+  @@index([jobId])
+  @@index([freelancerId])
+  @@index([status])
+  @@index([isWinner])
+}
+
 model Contract {
   id              String    @id @default(uuid()) @db.Uuid
   jobId           String    @unique @db.Uuid
   clientId        String    @db.Uuid
   freelancerId    String    @db.Uuid
   amount          Float
+  advanceAmount   Float     // Legal percentage advance payment
+  advancePercentage Float   @default(30) // Default 30%
   startDate       DateTime
   endDate         DateTime?
+  estimatedDays   Int?
   completionDate  DateTime?
-  status          ContractStatus @default(PENDING)
+  status          ContractStatus @default(PENDING_ADMIN_APPROVAL)
   terms           String?
+  googleMeetLink  String?
+  adminApprovedAt DateTime?
+  clientApprovedAt DateTime?
+  signedByClient  Boolean   @default(false)
+  signedByFreelancer Boolean @default(false)
+  extensionRequested Boolean @default(false)
+  extensionReason String?
+  extensionDays   Int?
   milestones      Milestone[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -297,12 +353,15 @@ model Payment {
   id              String    @id @default(uuid()) @db.Uuid
   contractId      String    @db.Uuid
   amount          Float
+  type            String    @default("milestone") // "advance", "milestone", "final", "refund"
   status          PaymentStatus @default(PENDING)
   paymentMethod   String    // "stripe", "paypal", "bank_transfer"
   transactionId   String?
   description     String?
   dueDate         DateTime?
   paidAt          DateTime?
+  isEscrowed      Boolean   @default(false) // Money held in escrow
+  releasedAt      DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

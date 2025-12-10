@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 // Import routes
-import contactRoutes from './routes/contact.routes';
+import publicRoutes from './routes/publicRoutes';
 import talentRoutes from './routes/talent.routes';
-import authRoutes from './routes/auth.routes';
+import authRoutes from './routes/authRoutes';
 import jobRoutes from './routes/jobs.routes';
 import proposalRoutes from './routes/proposals.routes';
 import contractRoutes from './routes/contracts.routes';
@@ -35,6 +36,7 @@ app.use(cors({
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(morgan('dev'));
 
 // Health check
@@ -43,7 +45,7 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/api/contact', contactRoutes);
+app.use('/api', publicRoutes);
 app.use('/api/talent', talentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

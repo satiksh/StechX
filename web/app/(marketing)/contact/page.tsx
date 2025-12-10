@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://stechx.onrender.com";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">(
@@ -27,7 +25,7 @@ export default function ContactPage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/contact`, {
+      const res = await fetch(`${API_BASE_URL}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

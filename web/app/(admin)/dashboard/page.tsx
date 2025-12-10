@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+import { API_BASE_URL } from "@/lib/config";
 
 interface Application {
   id: string;
@@ -28,7 +26,7 @@ export default function AdminDashboardPage() {
 
   async function fetchApplications() {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/applications`);
+      const res = await fetch(`${API_BASE_URL}/applications`);
       if (res.ok) {
         const data = await res.json();
         setApplications(data);
