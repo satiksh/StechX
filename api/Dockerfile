@@ -7,8 +7,9 @@ RUN apk add --no-cache openssl
 RUN npm ci
 
 COPY . .
+COPY ../db/schema.prisma ./prisma/schema.prisma
 
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 ENV PORT=4000
 EXPOSE 4000
