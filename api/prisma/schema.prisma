@@ -1,0 +1,744 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  FREELANCER
+  AGENCY
+}
+
+enum AuthProvider {
+  GOOGLE
+  LOCAL
+}
+
+enum ApplicationType {
+  CLIENT_PROJECT
+  TALENT
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+}
+
+enum ProjectStatus {
+  DRAFT
+  OPEN
+  BIDDING
+  BID_WON
+  PENDING_ACCEPTANCE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REJECTED_REOPEN_REQUESTED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ContractStatus {
+  PENDING_ADMIN_APPROVAL
+  PENDING_CLIENT_APPROVAL
+  ACTIVE
+  AWAITING_EXTENSION
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  ESCROWED
+  RELEASED
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  email           String    @unique
+  role            UserRole
+  provider        AuthProvider
+  providerId      String?
+  avatarUrl       String?
+  passwordHash    String?
+  bio             String?
+  skills          String[]  @default([])
+  hourlyRate      Float?    // For freelancers
+  totalEarnings   Float     @default(0)
+  rating          Float     @default(0) // Average rating
+  totalReviews    Int       @default(0)
+  portfolioUrl    String?
+  isVerified      Boolean   @default(false)
+  isSuspended     Boolean   @default(false)
+  lastLogin       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  applications    Application[]
+  jobsPosted      Job[] @relation("JobsAsClient")
+  proposals       Proposal[]
+  contractsAsClient Contract[] @relation("ContractAsClient")
+  contractsAsFreelancer Contract[] @relation("ContractAsFreelancer")
+  earnings        Earning[]
+  sentMessages    Message[]    @relation("sender")
+  receivedMessages Message[]   @relation("receiver")
+  reviews         Review[]     @relation("reviewer")
+  reviewedBy      Review[]     @relation("reviewee")
+  notifications   Notification[]
+  bookmarkedJobs  BookmarkedJob[]
+  bids            Bid[] @relation("FreelancerBids")
+  profileRating   Float     @default(0) // Separate rating for bid rejections
+
+  @@index([email])
+  @@index([role])
+  @@index([isVerified])
+  @@index([isSuspended])
+}
+
+model Service {
+  id               String   @id @default(uuid()) @db.Uuid
+  slug             String   @unique
+  title            String
+  shortDescription String
+  longDescription  String
+  highlights       String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  projects     Project[]
+  applications Application[]
+
+  @@index([slug])
+}
+
+model Project {
+  id           String   @id @default(uuid()) @db.Uuid
+  title        String
+  slug         String   @unique
+  serviceId    String   @db.Uuid
+  thumbnailUrl String
+  imageUrls    String[]
+  summary      String
+  caseStudy    String
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  service      Service       @relation(fields: [serviceId], references: [id])
+  testimonials Testimonial[]
+
+  @@index([serviceId])
+  @@index([isFeatured])
+}
+
+model Testimonial {
+  id         String  @id @default(uuid()) @db.Uuid
+  clientName String
+  clientRole String
+  quote      String
+  projectId  String? @db.Uuid
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model Application {
+  id         String            @id @default(uuid()) @db.Uuid
+  type       ApplicationType
+  serviceId  String?           @db.Uuid
+  name       String
+  email      String
+  message    String
+  budget     Float?
+  experience String?
+  status     ApplicationStatus @default(SUBMITTED)
+  createdAt  DateTime          @default(now())
+
+  // Relations
+  service Service? @relation(fields: [serviceId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+  userId  String?  @db.Uuid
+
+  @@index([serviceId])
+  @@index([email])
+  @@index([status])
+  @@index([type])
+}
+
+model Job {
+  id             String   @id @default(uuid()) @db.Uuid
+  title          String
+  description    String
+  clientId       String   @db.Uuid
+  serviceId      String   @db.Uuid
+  budgetMin      Float
+  budgetMax      Float
+  fixedPrice     Boolean  @default(false)
+  complexity     String
+  status         ProjectStatus @default(DRAFT)
+  deadline       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  winnerBidId    String? @db.Uuid
+  winnerUserId   String? @db.Uuid // Direct award scenario
+
+  // Relations
+  client      User       @relation("JobsAsClient", fields: [clientId], references: [id])
+  service     Service    @relation(fields: [serviceId], references: [id])
+  proposals   Proposal[]
+  contracts   Contract[]
+  bids        Bid[] @relation("JobBids")
+  winnerBid   Bid? @relation("WinnerBid", fields: [winnerBidId], references: [id])
+  winnerUser  User? @relation("WinnerUser", fields: [winnerUserId], references: [id])
+
+  @@index([clientId])
+  @@index([serviceId])
+  @@index([status])
+  @@index([winnerUserId])
+}
+
+model Proposal {
+  id             String   @id @default(uuid()) @db.Uuid
+  jobId          String   @db.Uuid
+  freelancerId   String   @db.Uuid
+  amount         Float
+  coverLetter    String
+  status         ProposalStatus @default(DRAFT)
+  estimatedHours Float?
+  milestonePlan  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  job        Job  @relation(fields: [jobId], references: [id])
+  freelancer User @relation(fields: [freelancerId], references: [id])
+  contracts  Contract[]
+
+  @@index([jobId])
+  @@index([freelancerId])
+  @@index([status])
+}
+
+model Contract {
+  id               String   @id @default(uuid()) @db.Uuid
+  proposalId       String   @db.Uuid
+  clientId         String   @db.Uuid
+  freelancerId     String   @db.Uuid
+  paymentStatus    PaymentStatus @default(PENDING)
+  contractStatus   ContractStatus @default(PENDING_ADMIN_APPROVAL)
+  totalAmount      Float
+  startDate        DateTime @default(now())
+  endDate          DateTime?
+  extensionRequest String?
+  extensionDays    Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  proposal   Proposal   @relation(fields: [proposalId], references: [id])
+  client     User       @relation("ContractAsClient", fields: [clientId], references: [id])
+  freelancer User       @relation("ContractAsFreelancer", fields: [freelancerId], references: [id])
+  messages   Message[]
+  reviews    Review[]
+  payments   Payment[]
+
+  @@index([proposalId])
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([contractStatus])
+}
+
+model Payment {
+  id               String   @id @default(uuid()) @db.Uuid
+  contractId       String   @db.Uuid
+  amount           Float
+  status           PaymentStatus @default(PENDING)
+  transactionId    String?
+  escrowAccountId  String?
+  escrowStatus     PaymentStatus @default(PENDING)
+  releasedAt       DateTime?
+  refundedAt       DateTime?
+  createdAt        DateTime @default(now())
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@index([contractId])
+  @@index([status])
+  @@index([transactionId])
+}
+
+model Message {
+  id           String   @id @default(uuid()) @db.Uuid
+  contractId   String   @db.Uuid
+  senderId     String   @db.Uuid
+  receiverId   String   @db.Uuid
+  content      String
+  status       MessageStatus @default(SENT)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id])
+  sender   User     @relation("sender", fields: [senderId], references: [id])
+  receiver User     @relation("receiver", fields: [receiverId], references: [id])
+
+  @@index([contractId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+model Review {
+  id           String   @id @default(uuid()) @db.Uuid
+  contractId   String   @db.Uuid
+  reviewerId   String   @db.Uuid
+  revieweeId   String   @db.Uuid
+  rating       Float
+  comment      String
+  createdAt    DateTime @default(now())
+
+  // Relations
+  contract  Contract @relation(fields: [contractId], references: [id])
+  reviewer  User     @relation("reviewer", fields: [reviewerId], references: [id])
+  reviewee  User     @relation("reviewee", fields: [revieweeId], references: [id])
+
+  @@index([contractId])
+  @@index([reviewerId])
+  @@index([revieweeId])
+  @@index([rating])
+}
+
+model Notification {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  title       String
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([read])
+}
+
+model BookmarkedJob {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  jobId     String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  job  Job  @relation(fields: [jobId], references: [id])
+
+  @@unique([userId, jobId])
+  @@index([createdAt])
+}
+
+model Bid {
+  id            String   @id @default(uuid()) @db.Uuid
+  jobId         String   @db.Uuid
+  freelancerId  String   @db.Uuid
+  amount        Float
+  coverLetter   String
+  status        ProposalStatus @default(DRAFT)
+  deliveryTime  Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job        Job  @relation("JobBids", fields: [jobId], references: [id])
+  freelancer User @relation("FreelancerBids", fields: [freelancerId], references: [id])
+  winnerFor  Job? @relation("WinnerBid")
+
+  @@index([jobId])
+  @@index([freelancerId])
+  @@index([status])
+}
+
+model Earning {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  amount     Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Attachment {
+  id         String   @id @default(uuid()) @db.Uuid
+  url        String
+  messageId  String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  // Relations
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@index([messageId])
+}
+
+model ProjectExtension {
+  id         String   @id @default(uuid()) @db.Uuid
+  projectId  String   @db.Uuid
+  status     ProjectStatus @default(PENDING_ACCEPTANCE)
+  requestedBy String
+  days       Int
+  reason     String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Escrow {
+  id           String   @id @default(uuid()) @db.Uuid
+  contractId   String   @db.Uuid
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@index([contractId])
+  @@index([status])
+}
+
+model PaymentHistory {
+  id          String   @id @default(uuid()) @db.Uuid
+  paymentId   String   @db.Uuid
+  status      PaymentStatus
+  timestamp   DateTime @default(now())
+  details     String?
+
+  // Relations
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+  @@index([status])
+}
+
+model LoginActivity {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  ipAddress   String
+  userAgent   String?
+  location    String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model AdminLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  adminId     String   @db.Uuid
+  action      String
+  targetId    String?
+  targetType  String?
+  details     String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([timestamp])
+}
+
+model BidRejection {
+  id          String   @id @default(uuid()) @db.Uuid
+  bidId       String   @db.Uuid
+  rejectedBy  String   @db.Uuid // admin user id
+  reason      String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  bid    Bid   @relation(fields: [bidId], references: [id])
+  admin  User  @relation(fields: [rejectedBy], references: [id])
+
+  @@index([bidId])
+  @@index([rejectedBy])
+}
+
+model LandingPageContent {
+  id          String   @id @default(uuid()) @db.Uuid
+  heroTitle   String
+  heroSubtitle String
+  heroCtaText  String
+  heroImageUrl String
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+model AdminActionLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  adminId     String   @db.Uuid
+  actionType  String
+  targetId    String?
+  targetType  String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+model ReviewInvitation {
+  id          String   @id @default(uuid()) @db.Uuid
+  contractId  String   @db.Uuid
+  sentTo      String
+  sentAt      DateTime @default(now())
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@index([contractId])
+  @@index([sentTo])
+}
+
+model AdminSuspension {
+  id           String   @id @default(uuid()) @db.Uuid
+  adminId      String   @db.Uuid
+  suspendedUserId String @db.Uuid
+  reason       String
+  createdAt    DateTime @default(now())
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+  user  User @relation("UserSuspensions", fields: [suspendedUserId], references: [id])
+
+  @@index([adminId])
+  @@index([suspendedUserId])
+}
+
+model NotificationPreference {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  emailEnabled Boolean  @default(true)
+  smsEnabled   Boolean  @default(false)
+  pushEnabled  Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Device {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  deviceToken  String   @unique
+  platform     String
+  lastSeenAt   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([platform])
+}
+
+model Admin {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  permissions String[]
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+}
+
+model AdminSetting {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  value       String
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  isEnabled   Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminSession {
+  id          String   @id @default(uuid()) @db.Uuid
+  adminId     String   @db.Uuid
+  sessionToken String  @unique
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([sessionToken])
+}
+
+model HealthCheck {
+  id        String   @id @default(uuid()) @db.Uuid
+  service   String
+  status    String
+  checkedAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String?
+  action      String
+  details     String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model Transaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  contractId  String   @db.Uuid
+  amount      Float
+  status      PaymentStatus @default(PENDING)
+  referenceId String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@index([contractId])
+  @@index([status])
+}
+
+model KYCVerification {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  documentUrl String
+  status      String   @default("pending")
+  submittedAt DateTime @default(now())
+  verifiedAt  DateTime?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ChatRoom {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime @default(now())
+}
+
+model ChatMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  roomId     String   @db.Uuid
+  userId     String   @db.Uuid
+  joinedAt   DateTime @default(now())
+
+  // Relations
+  room ChatRoom @relation(fields: [roomId], references: [id])
+  user User    @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  roomId    String   @db.Uuid
+  senderId  String   @db.Uuid
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  sender User     @relation(fields: [senderId], references: [id])
+
+  @@index([roomId])
+  @@index([senderId])
+}
+
+model Suspension {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  reason      String
+  createdAt   DateTime @default(now())
+}
+
+model AdminNews {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+model AdminContact {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  email       String
+  message     String
+  createdAt   DateTime @default(now())
+}
