@@ -16,15 +16,17 @@ function verifyToken(request: NextRequest) {
 // POST /api/bids/[id]/reject - Freelancer rejects winning bid OR Client rejects project
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
     const body = await request.json();
     const { reason } = body;
 
+    const { id } = await context.params;
+
     const bid = await prisma.bid.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         job: true,
         freelancer: true,
@@ -40,7 +42,7 @@ export async function POST(
 
     // Update bid status
     await prisma.bid.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'rejected',
         rejectionReason: reason,

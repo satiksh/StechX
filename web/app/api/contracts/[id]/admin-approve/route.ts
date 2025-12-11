@@ -16,7 +16,7 @@ function verifyToken(request: NextRequest) {
 // POST /api/contracts/[id]/admin-approve - Admin approves contract
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
@@ -31,8 +31,10 @@ export async function POST(
     const body = await request.json();
     const { googleMeetLink } = body;
 
+    const { id } = await context.params;
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         job: true,
         client: true,
@@ -49,7 +51,7 @@ export async function POST(
 
     // Update contract with admin approval and Google Meet link
     const updatedContract = await prisma.contract.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'PENDING_CLIENT_APPROVAL',
         adminApprovedAt: new Date(),

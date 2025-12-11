@@ -16,11 +16,13 @@ function verifyToken(request: NextRequest) {
 // GET /api/projects/[id] - Get single project
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     const project = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         client: {
           select: {
@@ -76,15 +78,17 @@ export async function GET(
 // PATCH /api/projects/[id] - Update project
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
     const body = await request.json();
 
+    const { id } = await context.params;
+
     // Verify ownership
     const project = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!project) {
@@ -102,7 +106,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.job.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
       include: {
         client: {
@@ -132,13 +136,15 @@ export async function PATCH(
 // DELETE /api/projects/[id] - Delete project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
 
+    const { id } = await context.params;
+
     const project = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!project) {
@@ -156,7 +162,7 @@ export async function DELETE(
     }
 
     await prisma.job.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({

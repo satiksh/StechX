@@ -16,13 +16,15 @@ function verifyToken(request: NextRequest) {
 // POST /api/contracts/[id]/sign - Client or Freelancer signs contract
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
 
+    const { id } = await context.params;
+
     const contract = await prisma.contract.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         job: true,
       },
@@ -67,7 +69,7 @@ export async function POST(
     }
 
     const updatedContract = await prisma.contract.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
