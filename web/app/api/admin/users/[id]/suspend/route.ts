@@ -16,7 +16,7 @@ function verifyToken(request: NextRequest) {
 // POST /api/admin/users/[id]/suspend - Suspend/Unsuspend user
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
@@ -31,8 +31,10 @@ export async function POST(
     const body = await request.json();
     const { suspend } = body; // true to suspend, false to unsuspend
 
+    const { id } = await context.params;
+
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         isSuspended: suspend,
       },
@@ -40,7 +42,7 @@ export async function POST(
 
     await prisma.notification.create({
       data: {
-        userId: params.id,
+        userId: id,
         type: suspend ? 'account_suspended' : 'account_restored',
         title: suspend ? 'Account Suspended' : 'Account Restored',
         message: suspend

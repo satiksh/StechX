@@ -16,13 +16,15 @@ function verifyToken(request: NextRequest) {
 // POST /api/bids/[id]/accept - Client accepts a bid
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const decoded = verifyToken(request);
 
+    const { id } = await context.params;
+
     const bid = await prisma.bid.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         job: true,
         freelancer: true,
@@ -50,7 +52,7 @@ export async function POST(
 
     // Update bid status to won
     const updatedBid = await prisma.bid.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         isWinner: true,
         status: 'won',
@@ -62,7 +64,7 @@ export async function POST(
     await prisma.bid.updateMany({
       where: {
         jobId: bid.jobId,
-        id: { not: params.id },
+        id: { not: id },
       },
       data: {
         status: 'lost',
