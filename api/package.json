@@ -24,7 +24,7 @@
   "author": "Satiksh Patel",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+  "@prisma/client": "5.22.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -55,7 +55,7 @@
     "@types/node": "^20.19.25",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
-    "prisma": "^5.7.1",
+  "prisma": "5.22.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
