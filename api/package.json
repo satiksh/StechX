@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "echo \"skip build on render for now\"",
-    "start": "npx tsx src/index.ts",
-    "prisma:generate": "prisma generate",
+  "start": "npm run prisma:generate && npx tsx src/index.ts",
+  "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio"
