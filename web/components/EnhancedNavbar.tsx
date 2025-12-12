@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { API_BASE_URL } from '@/lib/config';
 import { GoogleLogin } from '@react-oauth/google';
 
 type UserRole = 'freelancer' | 'client';
@@ -189,11 +190,16 @@ function AuthModal({ isOpen, onClose, mode, role }: AuthModalPropsExtended) {
   const [name, setName] = useState('');
   const [switchMode, setSwitchMode] = useState(false);
 
+  // Use the backend base URL (Render/local) rather than Next.js API routes.
+  // This keeps auth flows consistent with `AuthContext`.
+  const apiBaseUrl = API_BASE_URL;
+
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const response = await fetch('/api/auth/google', {
+      const response = await fetch(`${apiBaseUrl}/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           credential: credentialResponse.credential,
           role: role,
@@ -215,10 +221,11 @@ function AuthModal({ isOpen, onClose, mode, role }: AuthModalPropsExtended) {
     e.preventDefault();
     
     try {
-      const endpoint = mode === 'signin' ? '/api/auth/signin' : '/api/auth/signup';
+      const endpoint = mode === 'signin' ? `${apiBaseUrl}/auth/login` : `${apiBaseUrl}/auth/register`;
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email,
           password,
