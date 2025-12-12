@@ -117,6 +117,23 @@ model User {
   bids            Bid[] @relation("FreelancerBids")
   profileRating   Float     @default(0) // Separate rating for bid rejections
 
+  // Additional relation backrefs (required by Prisma validation)
+  jobsWonAsAwardee      Job[]         @relation("WinnerUser")
+  bidRejections         BidRejection[]
+  adminLogs             AdminLog[]
+  adminActionLogs       AdminActionLog[]
+  adminSuspensionsAsAdmin AdminSuspension[] @relation("_AdminSuspensionAdmin")
+  adminSuspensionsAsUser  AdminSuspension[] @relation("UserSuspensions")
+  notificationPreferences NotificationPreference[]
+  devices                Device[]
+  adminSessions           AdminSession[]
+  auditLogs               AuditLog[]
+  kycVerifications        KYCVerification[]
+  chatMemberships         ChatMember[]
+  chatMessages            ChatMessage[]
+  loginActivities         LoginActivity[]
+  adminProfile            Admin?
+
   @@index([email])
   @@index([role])
   @@index([isVerified])
@@ -136,6 +153,7 @@ model Service {
   // Relations
   projects     Project[]
   applications Application[]
+  jobs         Job[]
 
   @@index([slug])
 }
@@ -156,6 +174,7 @@ model Project {
   // Relations
   service      Service       @relation(fields: [serviceId], references: [id])
   testimonials Testimonial[]
+  extensions   ProjectExtension[]
 
   @@index([serviceId])
   @@index([isFeatured])
@@ -214,7 +233,7 @@ model Job {
   deadline       DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  winnerBidId    String? @db.Uuid
+  winnerBidId    String? @unique @db.Uuid
   winnerUserId   String? @db.Uuid // Direct award scenario
 
   // Relations
@@ -225,6 +244,7 @@ model Job {
   bids        Bid[] @relation("JobBids")
   winnerBid   Bid? @relation("WinnerBid", fields: [winnerBidId], references: [id])
   winnerUser  User? @relation("WinnerUser", fields: [winnerUserId], references: [id])
+  bookmarks   BookmarkedJob[]
 
   @@index([clientId])
   @@index([serviceId])
@@ -276,6 +296,10 @@ model Contract {
   messages   Message[]
   reviews    Review[]
   payments   Payment[]
+  jobs       Job[]
+  escrows    Escrow[]
+  transactions Transaction[]
+  reviewInvitations ReviewInvitation[]
 
   @@index([proposalId])
   @@index([clientId])
@@ -297,6 +321,7 @@ model Payment {
 
   // Relations
   contract Contract @relation(fields: [contractId], references: [id])
+  history  PaymentHistory[]
 
   @@index([contractId])
   @@index([status])
@@ -316,6 +341,7 @@ model Message {
   contract Contract @relation(fields: [contractId], references: [id])
   sender   User     @relation("sender", fields: [senderId], references: [id])
   receiver User     @relation("receiver", fields: [receiverId], references: [id])
+  attachments Attachment[]
 
   @@index([contractId])
   @@index([senderId])
@@ -387,6 +413,7 @@ model Bid {
   job        Job  @relation("JobBids", fields: [jobId], references: [id])
   freelancer User @relation("FreelancerBids", fields: [freelancerId], references: [id])
   winnerFor  Job? @relation("WinnerBid")
+  rejections BidRejection[]
 
   @@index([jobId])
   @@index([freelancerId])
@@ -556,7 +583,7 @@ model AdminSuspension {
   createdAt    DateTime @default(now())
 
   // Relations
-  admin User @relation(fields: [adminId], references: [id])
+  admin User @relation("_AdminSuspensionAdmin", fields: [adminId], references: [id])
   user  User @relation("UserSuspensions", fields: [suspendedUserId], references: [id])
 
   @@index([adminId])
@@ -689,6 +716,10 @@ model ChatRoom {
   id          String   @id @default(uuid()) @db.Uuid
   name        String
   createdAt   DateTime @default(now())
+
+  // Relations
+  members   ChatMember[]
+  messages  ChatMessage[]
 }
 
 model ChatMember {

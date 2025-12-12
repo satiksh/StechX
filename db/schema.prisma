@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  // Generate into the Next.js app so `@prisma/client` is initialized during `next build` on Vercel.
+  output   = "../web/node_modules/.prisma/client"
 }
 
 datasource db {

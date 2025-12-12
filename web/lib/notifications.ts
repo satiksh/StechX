@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export enum NotificationType {
   BID_PLACED = 'BID_PLACED',
@@ -19,22 +17,21 @@ interface NotificationData {
 }
 
 export async function createNotification(
-  userId: string | number,
+  userId: string,
   type: NotificationType,
   title: string,
   message: string,
   data?: NotificationData,
-  relatedId?: string | number
+  _relatedId?: string
 ) {
   try {
     return await prisma.notification.create({
       data: {
-        userId: Number(userId),
+        userId,
         type,
         title,
         message,
         data: data || {},
-        relatedId: relatedId ? Number(relatedId) : null,
         read: false,
       },
     });
@@ -45,9 +42,9 @@ export async function createNotification(
 }
 
 export async function notifyBidPlaced(
-  clientId: number,
-  freelancerId: number,
-  jobId: number,
+  clientId: string,
+  freelancerId: string,
+  jobId: string,
   projectTitle: string,
   bidAmount: number
 ) {
@@ -63,7 +60,7 @@ export async function notifyBidPlaced(
 }
 
 export async function notifyBidWon(
-  freelancerId: number,
+  freelancerId: string,
   clientName: string,
   projectTitle: string,
   bidAmount: number
@@ -78,7 +75,7 @@ export async function notifyBidWon(
 }
 
 export async function notifyBidAccepted(
-  clientId: number,
+  clientId: string,
   projectTitle: string,
   freelancerName: string,
   bidAmount: number
@@ -93,7 +90,7 @@ export async function notifyBidAccepted(
 }
 
 export async function notifyBidRejected(
-  freelancerId: number,
+  freelancerId: string,
   projectTitle: string,
   reason?: string
 ) {
@@ -107,7 +104,7 @@ export async function notifyBidRejected(
 }
 
 export async function notifyContractCreated(
-  adminId: number,
+  adminId: string,
   clientName: string,
   freelancerName: string,
   projectTitle: string,
@@ -123,8 +120,8 @@ export async function notifyContractCreated(
 }
 
 export async function notifyContractApproved(
-  clientId: number,
-  freelancerId: number,
+  clientId: string,
+  freelancerId: string,
   projectTitle: string,
   contractAmount: number,
   googleMeetLink: string
@@ -149,7 +146,7 @@ export async function notifyContractApproved(
 }
 
 export async function notifyUserSuspended(
-  userId: number,
+  userId: string,
   reason: string
 ) {
   await createNotification(
@@ -161,21 +158,21 @@ export async function notifyUserSuspended(
   );
 }
 
-export async function markNotificationAsRead(notificationId: number) {
+export async function markNotificationAsRead(notificationId: string) {
   return await prisma.notification.update({
     where: { id: notificationId },
     data: { read: true },
   });
 }
 
-export async function markAllNotificationsAsRead(userId: number) {
+export async function markAllNotificationsAsRead(userId: string) {
   return await prisma.notification.updateMany({
     where: { userId },
     data: { read: true },
   });
 }
 
-export async function getUnreadNotifications(userId: number) {
+export async function getUnreadNotifications(userId: string) {
   return await prisma.notification.findMany({
     where: {
       userId,
@@ -188,7 +185,7 @@ export async function getUnreadNotifications(userId: number) {
   });
 }
 
-export async function getAllNotifications(userId: number, take: number = 20) {
+export async function getAllNotifications(userId: string, take: number = 20) {
   return await prisma.notification.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },

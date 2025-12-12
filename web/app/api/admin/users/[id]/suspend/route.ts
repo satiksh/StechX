@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -43,9 +41,9 @@ export async function POST(
     await prisma.notification.create({
       data: {
         userId: id,
-        type: suspend ? 'account_suspended' : 'account_restored',
+  type: suspend ? 'account_suspended' : 'account_restored',
         title: suspend ? 'Account Suspended' : 'Account Restored',
-        message: suspend
+  message: suspend
           ? 'Your account has been suspended by an administrator. Please contact support.'
           : 'Your account has been restored. You can now access all features.',
       },

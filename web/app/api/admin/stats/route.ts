@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -33,8 +31,8 @@ export async function GET(request: NextRequest) {
       totalProjects,
       activeProjects,
       totalContracts,
-      activeContracts,
-      pendingContracts,
+  activeContracts,
+  pendingContracts,
       totalBids,
       totalPayments,
     ] = await Promise.all([
@@ -44,8 +42,8 @@ export async function GET(request: NextRequest) {
       prisma.job.count(),
       prisma.job.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS', 'BIDDING'] } } }),
       prisma.contract.count(),
-      prisma.contract.count({ where: { status: 'ACTIVE' } }),
-      prisma.contract.count({ where: { status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_CLIENT_APPROVAL'] } } }),
+  prisma.contract.count({ where: { status: 'ACTIVE' } }),
+  prisma.contract.count({ where: { status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_CLIENT_APPROVAL'] } } }),
       prisma.bid.count(),
       prisma.payment.count(),
     ]);
@@ -69,13 +67,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const recentProjects = await prisma.job.findMany({
+  const recentProjects = await prisma.job.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         title: true,
-        budget: true,
+  budget: true,
         status: true,
         createdAt: true,
         client: {

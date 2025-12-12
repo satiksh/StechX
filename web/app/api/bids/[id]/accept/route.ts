@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 function verifyToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -46,28 +44,22 @@ export async function POST(
       );
     }
 
-    // Set acceptance deadline (24 hours from now)
-    const acceptanceDeadline = new Date();
-    acceptanceDeadline.setHours(acceptanceDeadline.getHours() + 24);
-
-    // Update bid status to won
+  // Update bid status
     const updatedBid = await prisma.bid.update({
       where: { id },
       data: {
-        isWinner: true,
-        status: 'won',
-        acceptanceDeadline,
+    status: 'ACCEPTED',
       },
     });
 
-    // Mark other bids as lost
+  // Mark other bids as rejected
     await prisma.bid.updateMany({
       where: {
         jobId: bid.jobId,
         id: { not: id },
       },
       data: {
-        status: 'lost',
+    status: 'REJECTED',
       },
     });
 
@@ -76,7 +68,6 @@ export async function POST(
       where: { id: bid.jobId },
       data: {
         status: 'BID_WON',
-        assignedFreelancerId: bid.freelancerId,
       },
     });
 
@@ -84,21 +75,16 @@ export async function POST(
     await prisma.notification.create({
       data: {
         userId: bid.freelancerId,
-        type: 'bid_won',
-        title: 'Congratulations! Your Bid Won',
-        message: `Your bid of $${bid.bidAmount} for "${bid.job.title}" has been accepted. You have 24 hours to accept.`,
-        data: {
-          bidId: bid.id,
-          jobId: bid.jobId,
-          acceptanceDeadline: acceptanceDeadline.toISOString(),
-        },
+  type: 'bid_won',
+        title: 'Your bid was accepted',
+  message: `Your bid of $${bid.bidAmount} for "${bid.job.title}" has been accepted.`,
       },
     });
 
     return NextResponse.json({
       success: true,
       data: updatedBid,
-      message: 'Bid accepted successfully. Freelancer has 24 hours to accept.',
+  message: 'Bid accepted successfully.',
     });
   } catch (error: any) {
     console.error('Error accepting bid:', error);

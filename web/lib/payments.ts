@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 export enum PaymentStatus {
   PENDING = 'PENDING',
@@ -16,20 +14,17 @@ export enum PaymentType {
 }
 
 export async function createPayment(
-  fromUserId: number,
-  toUserId: number,
-  contractId: number,
+  contractId: string,
   amount: number,
   type: PaymentType = PaymentType.ADVANCE
 ) {
   return await prisma.payment.create({
     data: {
-      fromUserId,
-      toUserId,
       contractId,
       amount,
-      type,
+      type: type.toLowerCase(),
       status: PaymentStatus.PENDING,
+      paymentMethod: 'manual',
     },
   });
 }
@@ -42,38 +37,34 @@ export function calculateFinalAmount(contractAmount: number, advancePercentage: 
   return Math.round((contractAmount * (100 - advancePercentage)) / 100 * 100) / 100;
 }
 
-export async function getContractPayments(contractId: number) {
+export async function getContractPayments(contractId: string) {
   return await prisma.payment.findMany({
     where: { contractId },
-    include: {
-      fromUser: { select: { id: true, name: true, email: true } },
-      toUser: { select: { id: true, name: true, email: true } },
-    },
   });
 }
 
-export async function completePayment(paymentId: number, transactionId?: string) {
+export async function completePayment(paymentId: string, transactionId?: string) {
   return await prisma.payment.update({
     where: { id: paymentId },
     data: {
       status: PaymentStatus.COMPLETED,
       transactionId: transactionId || undefined,
-      completedAt: new Date(),
+  paidAt: new Date(),
     },
   });
 }
 
-export async function failPayment(paymentId: number, reason?: string) {
+export async function failPayment(paymentId: string, reason?: string) {
   return await prisma.payment.update({
     where: { id: paymentId },
     data: {
       status: PaymentStatus.FAILED,
-      failureReason: reason || undefined,
+  description: reason || undefined,
     },
   });
 }
 
-export async function refundPayment(paymentId: number, reason?: string) {
+export async function refundPayment(paymentId: string, reason?: string) {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
   });
@@ -85,13 +76,13 @@ export async function refundPayment(paymentId: number, reason?: string) {
   // Create refund record
   const refund = await prisma.payment.create({
     data: {
-      fromUserId: payment.toUserId,
-      toUserId: payment.fromUserId,
       contractId: payment.contractId,
       amount: payment.amount,
-      type: PaymentType.REFUND,
+      type: 'refund',
       status: PaymentStatus.COMPLETED,
-      originalPaymentId: paymentId,
+      paymentMethod: payment.paymentMethod,
+      description: reason || payment.description,
+      paidAt: new Date(),
     },
   });
 
@@ -100,67 +91,36 @@ export async function refundPayment(paymentId: number, reason?: string) {
     where: { id: paymentId },
     data: {
       status: PaymentStatus.REFUNDED,
-      refundReason: reason || undefined,
+  description: reason || payment.description,
     },
   });
 
   return refund;
 }
 
-export async function getUserBalance(userId: number) {
-  const payments = await prisma.payment.findMany({
-    where: {
-      toUserId: userId,
-      status: PaymentStatus.COMPLETED,
-    },
-  });
-
-  const totalEarned = payments.reduce((sum: number, p: any) => sum + p.amount, 0);
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { totalEarnings: true },
-  });
-
+export async function getUserBalance(_userId: string) {
+  // Marketplace schema Payments aren't tied to users directly; balances are derived via Contracts.
+  // Keep as a stub to avoid breaking imports.
   return {
-    totalEarned,
-    lastUpdated: new Date(),
+    totalEarned: 0,
+    pending: 0,
+    available: 0,
   };
 }
 
-export async function getPaymentStats(userId: number) {
-  const payments = await prisma.payment.findMany({
-    where: {
-      OR: [
-        { fromUserId: userId },
-        { toUserId: userId },
-      ],
-    },
-  });
-
-  const outgoing = payments
-    .filter((p: any) => p.fromUserId === userId)
-    .reduce((sum: number, p: any) => sum + p.amount, 0);
-
-  const incoming = payments
-    .filter((p: any) => p.toUserId === userId && p.status === PaymentStatus.COMPLETED)
-    .reduce((sum: number, p: any) => sum + p.amount, 0);
-
-  const pending = payments
-    .filter((p: any) => p.toUserId === userId && p.status === PaymentStatus.PENDING)
-    .reduce((sum: number, p: any) => sum + p.amount, 0);
-
+export async function getPaymentStats(_userId: string) {
+  // Payments aren't directly linked to users in this schema. Keep as a stub for now.
   return {
-    totalOutgoing: outgoing,
-    totalIncoming: incoming,
-    pendingPayments: pending,
-    transactionCount: payments.length,
+    totalOutgoing: 0,
+    totalIncoming: 0,
+    pendingPayments: 0,
+    transactionCount: 0,
   };
 }
 
 export async function validatePayment(
-  fromUserId: number,
-  toUserId: number,
+  fromUserId: string,
+  toUserId: string,
   amount: number
 ): Promise<{ valid: boolean; error?: string }> {
   if (!fromUserId || !toUserId) {
@@ -176,14 +136,14 @@ export async function validatePayment(
   }
 
   const fromUser = await prisma.user.findUnique({
-    where: { id: Number(fromUserId) },
+  where: { id: fromUserId },
   });
 
   if (!fromUser) {
     return { valid: false, error: 'Payer not found' };
   }
 
-  if (fromUser.status === 'SUSPENDED') {
+  if (fromUser.isSuspended) {
     return { valid: false, error: 'Payer account is suspended' };
   }
 
